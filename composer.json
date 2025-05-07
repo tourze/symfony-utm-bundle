@@ -1,0 +1,27 @@
+{
+  "name": "tourze/symfony-utm-bundle",
+  "description": "UTM",
+  "type": "symfony-bundle",
+  "license": "MIT",
+  "require": {
+    "php": "^8.1",
+    "doctrine/orm": "^3.0",
+    "doctrine/doctrine-bundle": "^2.13",
+    "symfony/yaml": "^6.4 || ^7.1",
+    "symfony/framework-bundle": "^6.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "Tourze\\Symfony\\UTM\\": "src"
+    }
+  },
+  "require-dev": {
+    "phpstan/phpstan": "^2.1",
+    "phpunit/phpunit": "^10.0"
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tourze\\Symfony\\UTM\\Tests\\": "tests"
+    }
+  }
+}
