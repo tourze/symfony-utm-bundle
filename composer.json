@@ -8,7 +8,11 @@
     "doctrine/orm": "^3.0",
     "doctrine/doctrine-bundle": "^2.13",
     "symfony/yaml": "^6.4 || ^7.1",
-    "symfony/framework-bundle": "^6.4"
+    "symfony/framework-bundle": "^6.4",
+    "symfony/dependency-injection": "^6.4",
+    "symfony/config": "^6.4",
+    "doctrine/dbal": "^4.0",
+    "symfony/http-kernel": "^6.4"
   },
   "autoload": {
     "psr-4": {
