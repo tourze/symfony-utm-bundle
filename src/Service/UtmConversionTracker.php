@@ -14,7 +14,7 @@ use Tourze\UtmBundle\Repository\UtmConversionRepository;
 
 /**
  * UTM转化跟踪服务
- * 
+ *
  * 负责跟踪转化事件并关联UTM数据
  */
 class UtmConversionTracker
@@ -31,7 +31,7 @@ class UtmConversionTracker
 
     /**
      * 跟踪转化事件
-     * 
+     *
      * @param string $eventName 事件名称
      * @param float|null $value 转化价值
      * @param array $metadata 额外元数据
@@ -42,14 +42,14 @@ class UtmConversionTracker
         // 获取UTM上下文
         $parameters = $this->contextManager->getCurrentParameters();
         $session = $this->contextManager->getCurrentSession();
-        
+
         // 获取用户标识符
         $userIdentifier = $this->getUserIdentifier();
-        
+
         // 创建转化记录
         /** @var UtmConversionRepository $repository */
         $repository = $this->entityManager->getRepository(UtmConversion::class);
-        
+
         $conversion = $repository->createConversion(
             $eventName,
             $parameters,
@@ -58,11 +58,11 @@ class UtmConversionTracker
             $value ?? 0.0,
             $metadata
         );
-        
+
         // 存储转化记录
         $this->entityManager->persist($conversion);
         $this->entityManager->flush();
-        
+
         $this->logger->info('跟踪了转化事件', [
             'event_name' => $eventName,
             'value' => $value,
@@ -71,11 +71,11 @@ class UtmConversionTracker
             'utm_medium' => $parameters?->getMedium(),
             'utm_campaign' => $parameters?->getCampaign(),
         ]);
-        
+
         // 派发转化事件
         $event = new UtmConversionEvent($conversion);
         $this->eventDispatcher->dispatch($event, UtmConversionEvent::NAME);
-        
+
         return $conversion;
     }
 
@@ -89,7 +89,7 @@ class UtmConversionTracker
         if (null !== $session && null !== $session->getUserIdentifier()) {
             return $session->getUserIdentifier();
         }
-        
+
         // 然后检查安全令牌
         if (null !== $this->tokenStorage) {
             $token = $this->tokenStorage->getToken();
@@ -100,13 +100,13 @@ class UtmConversionTracker
                 }
             }
         }
-        
+
         // 最后，使用会话ID作为匿名标识符
         $session = $this->requestStack->getSession();
         if (null !== $session) {
             return 'anonymous_' . $session->getId();
         }
-        
+
         return null;
     }
 
