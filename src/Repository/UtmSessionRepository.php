@@ -76,7 +76,7 @@ class UtmSessionRepository extends ServiceEntityRepository
      */
     public function cleanExpiredSessions(): int
     {
-        $qb = $this->_em->createQueryBuilder();
+        $qb = $this->getEntityManager()->createQueryBuilder();
         return $qb->delete(UtmSession::class, 's')
             ->where('s.expiresAt IS NOT NULL')
             ->andWhere('s.expiresAt < :now')
@@ -84,4 +84,4 @@ class UtmSessionRepository extends ServiceEntityRepository
             ->getQuery()
             ->execute();
     }
-} 
+}

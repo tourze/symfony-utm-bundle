@@ -120,7 +120,7 @@ class UtmConversionRepository extends ServiceEntityRepository
      */
     public function getUtmSourceStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $qb = $this->_em->createQueryBuilder();
+        $qb = $this->getEntityManager()->createQueryBuilder();
         $qb->select('p.source, COUNT(c.id) as count, SUM(c.value) as total_value')
             ->from(UtmConversion::class, 'c')
             ->join('c.parameters', 'p')
@@ -145,7 +145,7 @@ class UtmConversionRepository extends ServiceEntityRepository
      */
     public function getUtmMediumStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $qb = $this->_em->createQueryBuilder();
+        $qb = $this->getEntityManager()->createQueryBuilder();
         $qb->select('p.medium, COUNT(c.id) as count, SUM(c.value) as total_value')
             ->from(UtmConversion::class, 'c')
             ->join('c.parameters', 'p')
@@ -170,7 +170,7 @@ class UtmConversionRepository extends ServiceEntityRepository
      */
     public function getUtmCampaignStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $qb = $this->_em->createQueryBuilder();
+        $qb = $this->getEntityManager()->createQueryBuilder();
         $qb->select('p.campaign, COUNT(c.id) as count, SUM(c.value) as total_value')
             ->from(UtmConversion::class, 'c')
             ->join('c.parameters', 'p')
