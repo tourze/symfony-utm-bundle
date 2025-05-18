@@ -4,5 +4,11 @@ services:
     autowire: true      # Automatically injects dependencies in your services.
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
-  Tourze\Symfony\UTM\Service\:
+  Tourze\UtmBundle\Controller\:
+    resource: '../../Controller/'
+  Tourze\UtmBundle\EventListener\:
+    resource: '../../EventListener/'
+  Tourze\UtmBundle\Repository\:
+    resource: '../../Repository/'
+  Tourze\UtmBundle\Service\:
     resource: '../../Service/'

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tourze\Symfony\UTM;
+namespace Tourze\UtmBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 

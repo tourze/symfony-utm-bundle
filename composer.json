@@ -21,12 +21,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Tourze\\Symfony\\UTM\\": "src"
+      "Tourze\\UtmBundle\\": "src"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Tourze\\Symfony\\UTM\\Tests\\": "tests"
+      "Tourze\\UtmBundle\\Tests\\": "tests"
     }
   }
 }
