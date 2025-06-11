@@ -73,7 +73,7 @@ class SessionStorageStrategy implements UtmStorageStrategyInterface
             ]);
             
             return $parameters;
-        } catch (\Exception $e) {
+        } catch  (\Throwable $e) {
             $this->logger->error('无法从会话中反序列化UTM参数', [
                 'session_id' => $session->getId(),
                 'error' => $e->getMessage(),
