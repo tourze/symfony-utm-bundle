@@ -7,6 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Stringable;
 use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
+use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\UtmBundle\Repository\UtmSessionRepository;
 
 /**
@@ -18,6 +19,7 @@ use Tourze\UtmBundle\Repository\UtmSessionRepository;
 #[ORM\Index(name: 'utm_session_idx_user_identifier', columns: ['user_identifier'])]
 class UtmSession implements Stringable
 {
+    use TimestampableAware;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
@@ -65,10 +67,7 @@ class UtmSession implements Stringable
      * 更新时间
      */
     #[UpdateTimeColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]
-    private ?\DateTimeInterface $updateTime = null;
-
-    /**
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]/**
      * 会话过期时间
      */
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '会话过期时间'])]
@@ -138,19 +137,7 @@ class UtmSession implements Stringable
     {
         $this->userAgent = $userAgent;
         return $this;
-    }
-
-    public function getCreateTime(): \DateTimeInterface
-    {
-        return $this->createTime;
-    }
-
-    public function getUpdateTime(): ?\DateTimeInterface
-    {
-        return $this->updateTime;
-    }
-
-    public function getExpiresAt(): ?\DateTimeInterface
+    }public function getExpiresAt(): ?\DateTimeInterface
     {
         return $this->expiresAt;
     }
