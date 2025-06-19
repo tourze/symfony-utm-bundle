@@ -294,7 +294,6 @@ class UtmRequestListenerTest extends TestCase
         
         // Assert
         $this->assertArrayHasKey('kernel.request', $events);
-        $this->assertIsArray($events['kernel.request']);
         $this->assertSame('onKernelRequest', $events['kernel.request'][0]);
         $this->assertSame(100, $events['kernel.request'][1]);
     }
