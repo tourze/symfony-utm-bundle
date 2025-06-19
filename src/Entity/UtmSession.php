@@ -5,7 +5,6 @@ namespace Tourze\UtmBundle\Entity;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Stringable;
-use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\UtmBundle\Repository\UtmSessionRepository;
 
@@ -55,12 +54,6 @@ class UtmSession implements Stringable
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '用户代理字符串'])]
     private ?string $userAgent = null;
 
-    /**
-     * 创建时间
-     */
-    #[CreateTimeColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: false, options: ['comment' => '创建时间'])]
-    private \DateTimeInterface $createTime;
 
     /**
      * 会话过期时间
