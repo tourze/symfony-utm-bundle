@@ -54,7 +54,7 @@ class UtmContextManager
 
     /**
      * 初始化上下文
-     * 
+     *
      * 从存储中加载UTM参数和会话
      */
     private function initializeContext(): void
@@ -91,7 +91,7 @@ class UtmContextManager
 
     /**
      * 清除当前上下文缓存
-     * 
+     *
      * 下次访问时将重新加载
      */
     public function reset(): void

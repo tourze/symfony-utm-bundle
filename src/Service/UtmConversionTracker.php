@@ -26,8 +26,7 @@ class UtmConversionTracker
         private readonly ?TokenStorageInterface $tokenStorage,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface $logger
-    ) {
-    }
+    ) {}
 
     /**
      * 跟踪转化事件
@@ -47,8 +46,8 @@ class UtmConversionTracker
         $userIdentifier = $this->getUserIdentifier();
 
         // 创建转化记录
-        /** @var UtmConversionRepository $repository */
         $repository = $this->entityManager->getRepository(UtmConversion::class);
+        assert($repository instanceof UtmConversionRepository);
 
         $conversion = $repository->createConversion(
             $eventName,
@@ -82,7 +81,7 @@ class UtmConversionTracker
     /**
      * 获取当前用户标识符
      */
-    private function getUserIdentifier(): ?string
+    private function getUserIdentifier(): string
     {
         // 首先检查UTM会话
         $session = $this->contextManager->getCurrentSession();
@@ -103,11 +102,11 @@ class UtmConversionTracker
 
         // 最后，使用会话ID作为匿名标识符
         $session = $this->requestStack->getSession();
-        if (null !== $session) {
+        if ($session->isStarted()) {
             return 'anonymous_' . $session->getId();
         }
 
-        return null;
+        return 'anonymous_unknown';
     }
 
     /**
@@ -115,8 +114,8 @@ class UtmConversionTracker
      */
     public function findConversions(string $eventName, ?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        /** @var UtmConversionRepository $repository */
         $repository = $this->entityManager->getRepository(UtmConversion::class);
+        assert($repository instanceof UtmConversionRepository);
         return $repository->findByEventName($eventName, $startDate, $endDate);
     }
 
@@ -125,8 +124,8 @@ class UtmConversionTracker
      */
     public function findUserConversions(string $userIdentifier, ?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        /** @var UtmConversionRepository $repository */
         $repository = $this->entityManager->getRepository(UtmConversion::class);
+        assert($repository instanceof UtmConversionRepository);
         return $repository->findByUserIdentifier($userIdentifier, $startDate, $endDate);
     }
 
@@ -135,8 +134,8 @@ class UtmConversionTracker
      */
     public function getConversionStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        /** @var UtmConversionRepository $repository */
         $repository = $this->entityManager->getRepository(UtmConversion::class);
+        assert($repository instanceof UtmConversionRepository);
         return $repository->getConversionStats($startDate, $endDate);
     }
 
@@ -145,8 +144,8 @@ class UtmConversionTracker
      */
     public function getUtmSourceStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        /** @var UtmConversionRepository $repository */
         $repository = $this->entityManager->getRepository(UtmConversion::class);
+        assert($repository instanceof UtmConversionRepository);
         return $repository->getUtmSourceStats($startDate, $endDate);
     }
 
@@ -155,8 +154,8 @@ class UtmConversionTracker
      */
     public function getUtmMediumStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        /** @var UtmConversionRepository $repository */
         $repository = $this->entityManager->getRepository(UtmConversion::class);
+        assert($repository instanceof UtmConversionRepository);
         return $repository->getUtmMediumStats($startDate, $endDate);
     }
 
@@ -165,8 +164,8 @@ class UtmConversionTracker
      */
     public function getUtmCampaignStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        /** @var UtmConversionRepository $repository */
         $repository = $this->entityManager->getRepository(UtmConversion::class);
+        assert($repository instanceof UtmConversionRepository);
         return $repository->getUtmCampaignStats($startDate, $endDate);
     }
-} 
+}

@@ -5,7 +5,7 @@ namespace Tourze\UtmBundle\Entity;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Stringable;
-use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
+use Tourze\DoctrineTimestampBundle\Traits\CreateTimeAware;
 use Tourze\UtmBundle\Repository\UtmParametersRepository;
 
 /**
@@ -16,51 +16,28 @@ use Tourze\UtmBundle\Repository\UtmParametersRepository;
 #[ORM\Index(name: 'utm_parameters_idx_source_medium_campaign', columns: ['source', 'medium', 'campaign'])]
 class UtmParameters implements Stringable
 {
+    use CreateTimeAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER, options: ['comment' => '主键ID'])]
     private ?int $id = null;
 
-    /**
-     * utm_source: 流量来源（如：google, facebook, newsletter）
-     */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '流量来源（如：google, facebook, newsletter）'])]
     private ?string $source = null;
 
-    /**
-     * utm_medium: 营销媒介（如：cpc, email, social）
-     */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '营销媒介（如：cpc, email, social）'])]
     private ?string $medium = null;
 
-    /**
-     * utm_campaign: 营销活动名称
-     */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '营销活动名称'])]
     private ?string $campaign = null;
 
-    /**
-     * utm_term: 付费关键词
-     */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '付费关键词'])]
     private ?string $term = null;
 
-    /**
-     * utm_content: 区分相似内容/广告
-     */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '区分相似内容/广告'])]
     private ?string $content = null;
 
-    /**
-     * 创建时间
-     */
-    #[CreateTimeColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: false, options: ['comment' => '创建时间'])]
-    private \DateTimeInterface $createTime;
-
-    /**
-     * 存储非标准UTM参数
-     */
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '存储非标准UTM参数'])]
     private array $additionalParameters = [];
 
@@ -124,11 +101,6 @@ class UtmParameters implements Stringable
         return $this;
     }
 
-    public function getCreateTime(): \DateTimeInterface
-    {
-        return $this->createTime;
-    }
-
     public function getAdditionalParameters(): array
     {
         return $this->additionalParameters;
@@ -155,4 +127,4 @@ class UtmParameters implements Stringable
             $this->campaign ?? '-'
         );
     }
-} 
+}

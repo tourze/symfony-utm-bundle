@@ -5,7 +5,7 @@ namespace Tourze\UtmBundle\Entity;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Stringable;
-use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
+use Tourze\DoctrineTimestampBundle\Traits\CreateTimeAware;
 use Tourze\UtmBundle\Repository\UtmConversionRepository;
 
 /**
@@ -17,20 +17,16 @@ use Tourze\UtmBundle\Repository\UtmConversionRepository;
 #[ORM\Index(name: 'utm_conversion_idx_user_identifier', columns: ['user_identifier'])]
 class UtmConversion implements Stringable
 {
+    use CreateTimeAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER, options: ['comment' => '主键ID'])]
     private ?int $id = null;
 
-    /**
-     * 转化事件名称
-     */
     #[ORM\Column(name: 'event_name', type: Types::STRING, length: 255, nullable: false, options: ['comment' => '转化事件名称'])]
     private string $eventName;
 
-    /**
-     * 用户标识符
-     */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '用户标识符'])]
     private ?string $userIdentifier = null;
 
@@ -48,22 +44,9 @@ class UtmConversion implements Stringable
     #[ORM\JoinColumn(name: 'session_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?UtmSession $session = null;
 
-    /**
-     * 转化价值
-     */
     #[ORM\Column(type: Types::FLOAT, nullable: false, options: ['default' => 0, 'comment' => '转化价值'])]
     private float $value = 0.0;
 
-    /**
-     * 创建时间
-     */
-    #[CreateTimeColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: false, options: ['comment' => '创建时间'])]
-    private \DateTimeInterface $createTime;
-
-    /**
-     * 转化元数据
-     */
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '转化元数据'])]
     private array $metadata = [];
 
@@ -125,11 +108,6 @@ class UtmConversion implements Stringable
     {
         $this->value = $value;
         return $this;
-    }
-
-    public function getCreateTime(): \DateTimeInterface
-    {
-        return $this->createTime;
     }
 
     public function getMetadata(): array

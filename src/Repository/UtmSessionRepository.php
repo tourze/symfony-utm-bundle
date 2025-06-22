@@ -2,9 +2,9 @@
 
 namespace Tourze\UtmBundle\Repository;
 
+use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use Tourze\UtmBundle\Entity\UtmParameters;
 use Tourze\UtmBundle\Entity\UtmSession;
 
 /**
@@ -23,7 +23,7 @@ class UtmSessionRepository extends ServiceEntityRepository
     }
 
     /**
-     * 根据会话ID查找会话
+     * 根据会话ID查找UTM会话
      */
     public function findBySessionId(string $sessionId): ?UtmSession
     {
@@ -31,44 +31,34 @@ class UtmSessionRepository extends ServiceEntityRepository
     }
 
     /**
-     * 查找用户的有效会话
+     * 创建新的UTM会话
      */
-    public function findActiveByUserIdentifier(string $userIdentifier): array
+    public function createSession(string $sessionId, ?string $userIdentifier = null): UtmSession
     {
-        $qb = $this->createQueryBuilder('s');
-        return $qb
-            ->where('s.userIdentifier = :userIdentifier')
-            ->andWhere($qb->expr()->orX(
-                $qb->expr()->isNull('s.expiresAt'),
-                $qb->expr()->gt('s.expiresAt', ':now')
-            ))
-            ->setParameter('userIdentifier', $userIdentifier)
-            ->setParameter('now', new \DateTime())
-            ->orderBy('s.createTime', 'DESC')
-            ->getQuery()
-            ->getResult();
+        $session = new UtmSession();
+        $session->setSessionId($sessionId);
+
+        if (!empty($userIdentifier)) {
+            $session->setUserIdentifier($userIdentifier);
+        }
+
+        return $session;
     }
 
     /**
-     * 创建新的会话
+     * 根据用户标识符查找活跃会话
+     *
+     * @return UtmSession[]
      */
-    public function createSession(
-        string $sessionId,
-        ?UtmParameters $parameters = null,
-        ?string $userIdentifier = null,
-        ?string $clientIp = null,
-        ?string $userAgent = null,
-        ?\DateTimeInterface $expiresAt = null
-    ): UtmSession {
-        $session = new UtmSession();
-        $session->setSessionId($sessionId)
-            ->setParameters($parameters)
-            ->setUserIdentifier($userIdentifier)
-            ->setClientIp($clientIp)
-            ->setUserAgent($userAgent)
-            ->setExpiresAt($expiresAt);
-
-        return $session;
+    public function findActiveByUserIdentifier(string $userIdentifier): array
+    {
+        return $this->createQueryBuilder('s')
+            ->where('s.userIdentifier = :userIdentifier')
+            ->andWhere('s.expiresAt IS NULL OR s.expiresAt > :now')
+            ->setParameter('userIdentifier', $userIdentifier)
+            ->setParameter('now', new DateTimeImmutable())
+            ->getQuery()
+            ->getResult();
     }
 
     /**
@@ -76,11 +66,10 @@ class UtmSessionRepository extends ServiceEntityRepository
      */
     public function cleanExpiredSessions(): int
     {
-        $qb = $this->getEntityManager()->createQueryBuilder();
-        return $qb->delete(UtmSession::class, 's')
-            ->where('s.expiresAt IS NOT NULL')
-            ->andWhere('s.expiresAt < :now')
-            ->setParameter('now', new \DateTime())
+        return $this->createQueryBuilder('s')
+            ->delete()
+            ->where('s.expiresAt IS NOT NULL AND s.expiresAt < :now')
+            ->setParameter('now', new DateTimeImmutable())
             ->getQuery()
             ->execute();
     }

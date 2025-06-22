@@ -18,14 +18,12 @@ use Tourze\UtmBundle\Repository\UtmSessionRepository;
 class UtmSession implements Stringable
 {
     use TimestampableAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER, options: ['comment' => '主键ID'])]
     private ?int $id = null;
 
-    /**
-     * 用户会话ID
-     */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: false, options: ['comment' => '用户会话ID'])]
     private string $sessionId;
 
@@ -36,34 +34,18 @@ class UtmSession implements Stringable
     #[ORM\JoinColumn(name: 'parameters_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?UtmParameters $parameters = null;
 
-    /**
-     * 用户标识符（可为空，未登录用户）
-     */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '用户标识符'])]
     private ?string $userIdentifier = null;
 
-    /**
-     * 客户端IP地址
-     */
     #[ORM\Column(type: Types::STRING, length: 45, nullable: true, options: ['comment' => '客户端IP地址'])]
     private ?string $clientIp = null;
 
-    /**
-     * 用户代理字符串
-     */
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '用户代理字符串'])]
     private ?string $userAgent = null;
 
-
-    /**
-     * 会话过期时间
-     */
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '会话过期时间'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '会话过期时间'])]
     private ?\DateTimeInterface $expiresAt = null;
 
-    /**
-     * 额外会话元数据
-     */
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '额外会话元数据'])]
     private array $metadata = [];
 
@@ -125,7 +107,9 @@ class UtmSession implements Stringable
     {
         $this->userAgent = $userAgent;
         return $this;
-    }public function getExpiresAt(): ?\DateTimeInterface
+    }
+
+    public function getExpiresAt(): ?\DateTimeInterface
     {
         return $this->expiresAt;
     }

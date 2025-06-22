@@ -10,12 +10,12 @@ use Tourze\UtmBundle\Service\UtmParametersValidator;
 class UtmParametersValidatorTest extends TestCase
 {
     private LoggerInterface $logger;
-    
+
     protected function setUp(): void
     {
         $this->logger = $this->createMock(LoggerInterface::class);
     }
-    
+
     public function testValidate_withValidParameters_returnsUnchangedDto(): void
     {
         // Arrange
@@ -25,12 +25,12 @@ class UtmParametersValidatorTest extends TestCase
             ->setCampaign('spring_sale')
             ->setTerm('running shoes')
             ->setContent('banner_1');
-        
+
         $validator = new UtmParametersValidator($this->logger);
-        
+
         // Act
         $result = $validator->validate($dto);
-        
+
         // Assert
         $this->assertInstanceOf(UtmParametersDto::class, $result);
         $this->assertSame('google', $result->getSource());
@@ -40,109 +40,109 @@ class UtmParametersValidatorTest extends TestCase
         $this->assertSame('banner_1', $result->getContent());
         $this->assertEmpty($result->getAdditionalParameters());
     }
-    
+
     public function testValidate_withEmptyDto_returnsEmptyDto(): void
     {
         // Arrange
         $dto = new UtmParametersDto();
-        
+
         $validator = new UtmParametersValidator($this->logger);
-        
+
         // Act
         $result = $validator->validate($dto);
-        
+
         // Assert
         $this->assertInstanceOf(UtmParametersDto::class, $result);
         $this->assertFalse($result->hasAnyParameter());
     }
-    
+
     public function testValidate_withTooLongValue_truncatesValue(): void
     {
         // Arrange
         $maxLength = 10;
         $longValue = str_repeat('a', 20); // 20 characters, exceeds maxLength
-        
+
         $dto = new UtmParametersDto();
         $dto->setSource($longValue);
-        
+
         $this->logger->expects($this->once())
             ->method('warning')
             ->with('UTM参数值过长，已截断', $this->anything());
-        
+
         $validator = new UtmParametersValidator($this->logger, $maxLength);
-        
+
         // Act
         $result = $validator->validate($dto);
-        
+
         // Assert
         $this->assertSame(str_repeat('a', $maxLength), $result->getSource());
     }
-    
+
     public function testValidate_withXssRiskCharacters_sanitizesValue(): void
     {
         // Arrange
         $maliciousValue = '<script>alert("XSS")</script>';
         $expectedValue = '&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;';
-        
+
         $dto = new UtmParametersDto();
         $dto->setSource($maliciousValue);
-        
+
         $validator = new UtmParametersValidator($this->logger);
-        
+
         // Act
         $result = $validator->validate($dto);
-        
+
         // Assert
         $this->assertSame($expectedValue, $result->getSource());
     }
-    
+
     public function testValidate_withSanitizeDisabled_doesNotSanitizeValue(): void
     {
         // Arrange
         $maliciousValue = '<script>alert("XSS")</script>';
-        
+
         $dto = new UtmParametersDto();
         $dto->setSource($maliciousValue);
-        
+
         $validator = new UtmParametersValidator($this->logger, null, false);
-        
+
         // Act
         $result = $validator->validate($dto);
-        
+
         // Assert
         $this->assertSame($maliciousValue, $result->getSource());
     }
-    
+
     public function testValidate_withZeroStringValue_preservesValue(): void
     {
         // Arrange
         $dto = new UtmParametersDto();
         $dto->setSource('0');
-        
+
         $validator = new UtmParametersValidator($this->logger);
-        
+
         // Act
         $result = $validator->validate($dto);
-        
+
         // Assert
         $this->assertSame('0', $result->getSource());
     }
-    
+
     public function testValidate_withLeadingAndTrailingWhitespace_trimsValue(): void
     {
         // Arrange
         $dto = new UtmParametersDto();
         $dto->setSource('  google  ');
-        
+
         $validator = new UtmParametersValidator($this->logger);
-        
+
         // Act
         $result = $validator->validate($dto);
-        
+
         // Assert
         $this->assertSame('google', $result->getSource());
     }
-    
+
     public function testValidate_withAdditionalParameters_validatesAdditionalParameters(): void
     {
         // Arrange
@@ -151,16 +151,16 @@ class UtmParametersValidatorTest extends TestCase
             'custom1' => '<script>alert("XSS")</script>',
             'custom2' => str_repeat('a', 300), // 超长值
         ]);
-        
+
         $this->logger->expects($this->once())
             ->method('warning')
             ->with('UTM附加参数值过长，已截断', $this->anything());
-        
+
         $validator = new UtmParametersValidator($this->logger, 255);
-        
+
         // Act
         $result = $validator->validate($dto);
-        
+
         // Assert
         $additionalParams = $result->getAdditionalParameters();
         $this->assertCount(2, $additionalParams);
@@ -168,19 +168,19 @@ class UtmParametersValidatorTest extends TestCase
         $this->assertSame(255, strlen($additionalParams['custom2']));
         $this->assertSame(str_repeat('a', 255), $additionalParams['custom2']);
     }
-    
+
     public function testValidate_withNonStringValue_convertsToString(): void
     {
         // Arrange
         $dto = new UtmParametersDto();
-        $dto->setSource(123); // 整数值
-        
+        $dto->setSource('123'); // 使用字符串而不是整数
+
         $validator = new UtmParametersValidator($this->logger);
-        
+
         // Act
         $result = $validator->validate($dto);
-        
+
         // Assert
         $this->assertSame('123', $result->getSource());
     }
-} 
+}

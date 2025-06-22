@@ -28,8 +28,7 @@ class UtmRequestListener implements EventSubscriberInterface
         private readonly UtmContextManager $contextManager,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     /**
      * 处理请求事件
@@ -60,8 +59,8 @@ class UtmRequestListener implements EventSubscriberInterface
         }
 
         // 创建/检索UTM参数实体
-        /** @var UtmParametersRepository $repository */
         $repository = $this->entityManager->getRepository(UtmParameters::class);
+        assert($repository instanceof UtmParametersRepository);
         $parameters = $repository->findOrCreateByParams($validatedParamsDto);
 
         // 持久化参数（如果是新创建的）
