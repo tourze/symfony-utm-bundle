@@ -6,8 +6,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Tourze\UtmBundle\Entity\UtmParameters;
-use Tourze\UtmBundle\Entity\UtmSession;
-use Tourze\UtmBundle\Repository\UtmParametersRepository;
 use Tourze\UtmBundle\Repository\UtmSessionRepository;
 
 /**
@@ -23,6 +21,7 @@ class DatabaseStorageStrategy implements UtmStorageStrategyInterface
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly RequestStack $requestStack,
+        private readonly UtmSessionRepository $utmSessionRepository,
         private readonly LoggerInterface $logger,
         ?string $sessionKey = null,
         ?int $lifetime = null
@@ -45,22 +44,16 @@ class DatabaseStorageStrategy implements UtmStorageStrategyInterface
             return;
         }
 
-        // 通过仓库获取实例
-        $parametersRepository = $this->entityManager->getRepository(UtmParameters::class);
-        assert($parametersRepository instanceof UtmParametersRepository);
-        $sessionRepository = $this->entityManager->getRepository(UtmSession::class);
-        assert($sessionRepository instanceof UtmSessionRepository);
-
         // 保存UTM参数
         $this->entityManager->persist($parameters);
 
         // 创建或更新会话
         $sessionId = $session->getId();
-        $utmSession = $sessionRepository->findBySessionId($sessionId);
+        $utmSession = $this->utmSessionRepository->findBySessionId($sessionId);
 
         if (null === $utmSession) {
             // 创建新会话
-            $utmSession = $sessionRepository->createSession($sessionId);
+            $utmSession = $this->utmSessionRepository->createSession($sessionId);
             $utmSession->setParameters($parameters)
                 ->setClientIp($request->getClientIp())
                 ->setUserAgent($request->headers->get('User-Agent'))
@@ -100,10 +93,7 @@ class DatabaseStorageStrategy implements UtmStorageStrategyInterface
 
         $utmSessionId = $session->get($this->sessionKey);
 
-        $sessionRepository = $this->entityManager->getRepository(UtmSession::class);
-        assert($sessionRepository instanceof UtmSessionRepository);
-
-        $utmSession = $sessionRepository->find($utmSessionId);
+        $utmSession = $this->utmSessionRepository->find($utmSessionId);
 
         if (null === $utmSession) {
             $this->logger->warning('无法找到UTM会话', [

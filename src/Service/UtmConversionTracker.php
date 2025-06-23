@@ -25,6 +25,7 @@ class UtmConversionTracker
         private readonly RequestStack $requestStack,
         private readonly ?TokenStorageInterface $tokenStorage,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly UtmConversionRepository $utmConversionRepository,
         private readonly LoggerInterface $logger
     ) {}
 
@@ -46,10 +47,7 @@ class UtmConversionTracker
         $userIdentifier = $this->getUserIdentifier();
 
         // 创建转化记录
-        $repository = $this->entityManager->getRepository(UtmConversion::class);
-        assert($repository instanceof UtmConversionRepository);
-
-        $conversion = $repository->createConversion(
+        $conversion = $this->utmConversionRepository->createConversion(
             $eventName,
             $parameters,
             $session,
@@ -114,9 +112,7 @@ class UtmConversionTracker
      */
     public function findConversions(string $eventName, ?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $repository = $this->entityManager->getRepository(UtmConversion::class);
-        assert($repository instanceof UtmConversionRepository);
-        return $repository->findByEventName($eventName, $startDate, $endDate);
+        return $this->utmConversionRepository->findByEventName($eventName, $startDate, $endDate);
     }
 
     /**
@@ -124,9 +120,7 @@ class UtmConversionTracker
      */
     public function findUserConversions(string $userIdentifier, ?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $repository = $this->entityManager->getRepository(UtmConversion::class);
-        assert($repository instanceof UtmConversionRepository);
-        return $repository->findByUserIdentifier($userIdentifier, $startDate, $endDate);
+        return $this->utmConversionRepository->findByUserIdentifier($userIdentifier, $startDate, $endDate);
     }
 
     /**
@@ -134,9 +128,7 @@ class UtmConversionTracker
      */
     public function getConversionStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $repository = $this->entityManager->getRepository(UtmConversion::class);
-        assert($repository instanceof UtmConversionRepository);
-        return $repository->getConversionStats($startDate, $endDate);
+        return $this->utmConversionRepository->getConversionStats($startDate, $endDate);
     }
 
     /**
@@ -144,9 +136,7 @@ class UtmConversionTracker
      */
     public function getUtmSourceStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $repository = $this->entityManager->getRepository(UtmConversion::class);
-        assert($repository instanceof UtmConversionRepository);
-        return $repository->getUtmSourceStats($startDate, $endDate);
+        return $this->utmConversionRepository->getUtmSourceStats($startDate, $endDate);
     }
 
     /**
@@ -154,9 +144,7 @@ class UtmConversionTracker
      */
     public function getUtmMediumStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $repository = $this->entityManager->getRepository(UtmConversion::class);
-        assert($repository instanceof UtmConversionRepository);
-        return $repository->getUtmMediumStats($startDate, $endDate);
+        return $this->utmConversionRepository->getUtmMediumStats($startDate, $endDate);
     }
 
     /**
@@ -164,8 +152,6 @@ class UtmConversionTracker
      */
     public function getUtmCampaignStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $repository = $this->entityManager->getRepository(UtmConversion::class);
-        assert($repository instanceof UtmConversionRepository);
-        return $repository->getUtmCampaignStats($startDate, $endDate);
+        return $this->utmConversionRepository->getUtmCampaignStats($startDate, $endDate);
     }
 }

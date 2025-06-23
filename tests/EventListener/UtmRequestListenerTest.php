@@ -60,6 +60,7 @@ class UtmRequestListenerTest extends TestCase
             $this->storageStrategy,
             $this->contextManager,
             $this->entityManager,
+            $this->repository,
             $this->logger
         );
         
@@ -84,6 +85,7 @@ class UtmRequestListenerTest extends TestCase
             $this->storageStrategy,
             $this->contextManager,
             $this->entityManager,
+            $this->repository,
             $this->logger
         );
         
@@ -123,8 +125,7 @@ class UtmRequestListenerTest extends TestCase
             ->method('debug')
             ->with('无有效的UTM参数，跳过处理');
         
-        $this->entityManager->expects($this->never())
-            ->method('getRepository');
+        // 不再需要调用 getRepository
         
         $listener = new UtmRequestListener(
             $this->parametersExtractor,
@@ -132,6 +133,7 @@ class UtmRequestListenerTest extends TestCase
             $this->storageStrategy,
             $this->contextManager,
             $this->entityManager,
+            $this->repository,
             $this->logger
         );
         
@@ -171,9 +173,7 @@ class UtmRequestListenerTest extends TestCase
             ->with($rawDto)
             ->willReturn($validatedDto);
         
-        $this->entityManager->expects($this->once())
-            ->method('getRepository')
-            ->willReturn($this->repository);
+        // 不再需要调用 getRepository
         
         $this->repository->expects($this->once())
             ->method('findOrCreateByParams')
@@ -204,6 +204,7 @@ class UtmRequestListenerTest extends TestCase
             $this->storageStrategy,
             $this->contextManager,
             $this->entityManager,
+            $this->repository,
             $this->logger
         );
         
@@ -249,9 +250,7 @@ class UtmRequestListenerTest extends TestCase
             ->with($rawDto)
             ->willReturn($validatedDto);
         
-        $this->entityManager->expects($this->once())
-            ->method('getRepository')
-            ->willReturn($this->repository);
+        // 不再需要调用 getRepository
         
         $this->repository->expects($this->once())
             ->method('findOrCreateByParams')
@@ -278,6 +277,7 @@ class UtmRequestListenerTest extends TestCase
             $this->storageStrategy,
             $this->contextManager,
             $this->entityManager,
+            $this->repository,
             $this->logger
         );
         

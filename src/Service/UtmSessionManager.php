@@ -21,6 +21,7 @@ class UtmSessionManager
         private readonly RequestStack $requestStack,
         private readonly EntityManagerInterface $entityManager,
         private readonly UtmStorageStrategyInterface $storageStrategy,
+        private readonly UtmSessionRepository $utmSessionRepository,
         private readonly LoggerInterface $logger,
         private readonly int $sessionLifetime = 2592000 // 默认30天（单位：秒）
     ) {}
@@ -37,11 +38,8 @@ class UtmSessionManager
             throw new \RuntimeException('无法创建UTM会话：缺少请求或会话');
         }
 
-        $repository = $this->entityManager->getRepository(UtmSession::class);
-        assert($repository instanceof UtmSessionRepository);
-
         // 创建新会话
-        $utmSession = $repository->createSession($session->getId());
+        $utmSession = $this->utmSessionRepository->createSession($session->getId());
         $utmSession->setParameters($parameters)
             ->setClientIp($request->getClientIp())
             ->setUserAgent($request->headers->get('User-Agent'))
@@ -79,10 +77,7 @@ class UtmSessionManager
             return null;
         }
 
-        $repository = $this->entityManager->getRepository(UtmSession::class);
-        assert($repository instanceof UtmSessionRepository);
-
-        $utmSession = $repository->findBySessionId($session->getId());
+        $utmSession = $this->utmSessionRepository->findBySessionId($session->getId());
 
         if (null === $utmSession) {
             // 会话在存储策略中存在，但数据库中不存在，创建一个新的
@@ -113,9 +108,7 @@ class UtmSessionManager
 
         if (null === $utmSession) {
             // 没有现有会话，尝试查找用户的其他活动会话
-            $repository = $this->entityManager->getRepository(UtmSession::class);
-            assert($repository instanceof UtmSessionRepository);
-            $activeSessions = $repository->findActiveByUserIdentifier($userIdentifier);
+            $activeSessions = $this->utmSessionRepository->findActiveByUserIdentifier($userIdentifier);
 
             if (empty($activeSessions)) {
                 $this->logger->debug('没有要关联的UTM会话', [
@@ -144,9 +137,7 @@ class UtmSessionManager
      */
     public function cleanExpiredSessions(): int
     {
-        $repository = $this->entityManager->getRepository(UtmSession::class);
-        assert($repository instanceof UtmSessionRepository);
-        $count = $repository->cleanExpiredSessions();
+        $count = $this->utmSessionRepository->cleanExpiredSessions();
 
         $this->logger->info('清理了过期的UTM会话', [
             'count' => $count,

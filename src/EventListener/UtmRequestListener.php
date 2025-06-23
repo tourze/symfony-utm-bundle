@@ -7,7 +7,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Tourze\UtmBundle\Entity\UtmParameters;
 use Tourze\UtmBundle\Repository\UtmParametersRepository;
 use Tourze\UtmBundle\Service\Storage\UtmStorageStrategyInterface;
 use Tourze\UtmBundle\Service\UtmContextManager;
@@ -27,6 +26,7 @@ class UtmRequestListener implements EventSubscriberInterface
         private readonly UtmStorageStrategyInterface $storageStrategy,
         private readonly UtmContextManager $contextManager,
         private readonly EntityManagerInterface $entityManager,
+        private readonly UtmParametersRepository $utmParametersRepository,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -59,9 +59,7 @@ class UtmRequestListener implements EventSubscriberInterface
         }
 
         // 创建/检索UTM参数实体
-        $repository = $this->entityManager->getRepository(UtmParameters::class);
-        assert($repository instanceof UtmParametersRepository);
-        $parameters = $repository->findOrCreateByParams($validatedParamsDto);
+        $parameters = $this->utmParametersRepository->findOrCreateByParams($validatedParamsDto);
 
         // 持久化参数（如果是新创建的）
         if (null === $parameters->getId()) {
