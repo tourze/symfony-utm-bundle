@@ -9,10 +9,11 @@ use Tourze\UtmBundle\Entity\UtmParameters;
 use Tourze\UtmBundle\Entity\UtmSession;
 use Tourze\UtmBundle\Repository\UtmSessionRepository;
 use Tourze\UtmBundle\Service\Storage\UtmStorageStrategyInterface;
+use Tourze\UtmBundle\Exception\UtmSessionException;
 
 /**
  * UTM会话管理器
- * 
+ *
  * 管理UTM会话生命周期，处理会话合并和过期
  */
 class UtmSessionManager
@@ -35,7 +36,7 @@ class UtmSessionManager
         $session = $this->requestStack->getSession();
 
         if (null === $request || !$session->isStarted()) {
-            throw new \RuntimeException('无法创建UTM会话：缺少请求或会话');
+            throw new UtmSessionException('无法创建UTM会话：缺少请求或会话');
         }
 
         // 创建新会话

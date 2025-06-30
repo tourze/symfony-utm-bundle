@@ -9,7 +9,7 @@ use Tourze\UtmBundle\Service\Storage\UtmStorageStrategyInterface;
 
 /**
  * UTM上下文管理器
- * 
+ *
  * 提供当前请求的UTM上下文信息
  */
 class UtmContextManager

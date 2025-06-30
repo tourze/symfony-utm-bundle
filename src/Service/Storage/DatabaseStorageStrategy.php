@@ -10,7 +10,7 @@ use Tourze\UtmBundle\Repository\UtmSessionRepository;
 
 /**
  * 数据库存储策略
- * 
+ *
  * 将UTM参数持久化到数据库
  */
 class DatabaseStorageStrategy implements UtmStorageStrategyInterface

@@ -9,7 +9,7 @@ use Tourze\UtmBundle\Entity\UtmParameters;
 
 /**
  * 会话存储策略
- * 
+ *
  * 将UTM参数存储在用户会话中
  */
 class SessionStorageStrategy implements UtmStorageStrategyInterface

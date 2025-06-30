@@ -9,7 +9,7 @@ use Tourze\UtmBundle\Service\UtmSessionManager;
 
 /**
  * UTM安全监听器
- * 
+ *
  * 监听用户登录事件，关联用户与UTM会话
  */
 class UtmSecurityListener implements EventSubscriberInterface
