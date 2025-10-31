@@ -19,8 +19,7 @@ class UtmConversionEvent extends Event
 
     public function __construct(
         private readonly UtmConversion $conversion,
-    )
-    {
+    ) {
     }
 
     /**

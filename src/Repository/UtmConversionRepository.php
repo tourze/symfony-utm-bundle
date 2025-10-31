@@ -4,18 +4,15 @@ namespace Tourze\UtmBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 use Tourze\UtmBundle\Entity\UtmConversion;
-use Tourze\UtmBundle\Entity\UtmParameters;
-use Tourze\UtmBundle\Entity\UtmSession;
 
 /**
  * UTM转化事件仓库
  *
- * @method UtmConversion|null find($id, $lockMode = null, $lockVersion = null)
- * @method UtmConversion|null findOneBy(array $criteria, array $orderBy = null)
- * @method UtmConversion[]    findAll()
- * @method UtmConversion[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<UtmConversion>
  */
+#[AsRepository(entityClass: UtmConversion::class)]
 class UtmConversionRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -24,169 +21,200 @@ class UtmConversionRepository extends ServiceEntityRepository
     }
 
     /**
-     * 创建新的转化事件记录
-     */
-    public function createConversion(
-        string $eventName,
-        ?UtmParameters $parameters = null,
-        ?UtmSession $session = null,
-        ?string $userIdentifier = null,
-        float $value = 0.0,
-        array $metadata = []
-    ): UtmConversion {
-        $conversion = new UtmConversion();
-        $conversion->setEventName($eventName)
-            ->setParameters($parameters)
-            ->setSession($session)
-            ->setUserIdentifier($userIdentifier)
-            ->setValue($value)
-            ->setMetadata($metadata);
-
-        return $conversion;
-    }
-
-    /**
      * 根据事件名称查找转化事件
+     *
+     * @return array<UtmConversion>
      */
     public function findByEventName(string $eventName, ?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
         $qb = $this->createQueryBuilder('c')
             ->where('c.eventName = :eventName')
-            ->setParameter('eventName', $eventName);
+            ->setParameter('eventName', $eventName)
+        ;
 
         if (null !== $startDate) {
             $qb->andWhere('c.createTime >= :startDate')
-                ->setParameter('startDate', $startDate);
+                ->setParameter('startDate', $startDate)
+            ;
         }
 
         if (null !== $endDate) {
             $qb->andWhere('c.createTime <= :endDate')
-                ->setParameter('endDate', $endDate);
+                ->setParameter('endDate', $endDate)
+            ;
         }
 
+        /** @var array<UtmConversion> */
         return $qb->orderBy('c.createTime', 'DESC')
             ->getQuery()
-            ->getResult();
+            ->getResult()
+        ;
     }
 
     /**
      * 查找用户的转化事件
+     *
+     * @return array<UtmConversion>
      */
     public function findByUserIdentifier(string $userIdentifier, ?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
         $qb = $this->createQueryBuilder('c')
             ->where('c.userIdentifier = :userIdentifier')
-            ->setParameter('userIdentifier', $userIdentifier);
+            ->setParameter('userIdentifier', $userIdentifier)
+        ;
 
         if (null !== $startDate) {
             $qb->andWhere('c.createTime >= :startDate')
-                ->setParameter('startDate', $startDate);
+                ->setParameter('startDate', $startDate)
+            ;
         }
 
         if (null !== $endDate) {
             $qb->andWhere('c.createTime <= :endDate')
-                ->setParameter('endDate', $endDate);
+                ->setParameter('endDate', $endDate)
+            ;
         }
 
+        /** @var array<UtmConversion> */
         return $qb->orderBy('c.createTime', 'DESC')
             ->getQuery()
-            ->getResult();
+            ->getResult()
+        ;
     }
 
     /**
      * 获取转化事件统计信息
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getConversionStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
         $qb = $this->createQueryBuilder('c')
             ->select('c.eventName, COUNT(c.id) as count, SUM(c.value) as total_value')
-            ->groupBy('c.eventName');
+            ->groupBy('c.eventName')
+        ;
 
         if (null !== $startDate) {
             $qb->andWhere('c.createTime >= :startDate')
-                ->setParameter('startDate', $startDate);
+                ->setParameter('startDate', $startDate)
+            ;
         }
 
         if (null !== $endDate) {
             $qb->andWhere('c.createTime <= :endDate')
-                ->setParameter('endDate', $endDate);
+                ->setParameter('endDate', $endDate)
+            ;
         }
 
+        /** @var array<int, array<string, mixed>> */
         return $qb->getQuery()->getResult();
     }
 
     /**
      * 获取UTM来源转化统计
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getUtmSourceStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $qb = $this->getEntityManager()->createQueryBuilder();
-        $qb->select('p.source, COUNT(c.id) as count, SUM(c.value) as total_value')
-            ->from(UtmConversion::class, 'c')
+        $qb = $this->createQueryBuilder('c')
+            ->select('p.source, COUNT(c.id) as count, SUM(c.value) as total_value')
             ->join('c.parameters', 'p')
             ->where('p.source IS NOT NULL')
-            ->groupBy('p.source');
+            ->groupBy('p.source')
+        ;
 
         if (null !== $startDate) {
             $qb->andWhere('c.createTime >= :startDate')
-                ->setParameter('startDate', $startDate);
+                ->setParameter('startDate', $startDate)
+            ;
         }
 
         if (null !== $endDate) {
             $qb->andWhere('c.createTime <= :endDate')
-                ->setParameter('endDate', $endDate);
+                ->setParameter('endDate', $endDate)
+            ;
         }
 
+        /** @var array<int, array<string, mixed>> */
         return $qb->getQuery()->getResult();
     }
 
     /**
      * 获取UTM媒介转化统计
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getUtmMediumStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $qb = $this->getEntityManager()->createQueryBuilder();
-        $qb->select('p.medium, COUNT(c.id) as count, SUM(c.value) as total_value')
-            ->from(UtmConversion::class, 'c')
+        $qb = $this->createQueryBuilder('c')
+            ->select('p.medium, COUNT(c.id) as count, SUM(c.value) as total_value')
             ->join('c.parameters', 'p')
             ->where('p.medium IS NOT NULL')
-            ->groupBy('p.medium');
+            ->groupBy('p.medium')
+        ;
 
         if (null !== $startDate) {
             $qb->andWhere('c.createTime >= :startDate')
-                ->setParameter('startDate', $startDate);
+                ->setParameter('startDate', $startDate)
+            ;
         }
 
         if (null !== $endDate) {
             $qb->andWhere('c.createTime <= :endDate')
-                ->setParameter('endDate', $endDate);
+                ->setParameter('endDate', $endDate)
+            ;
         }
 
+        /** @var array<int, array<string, mixed>> */
         return $qb->getQuery()->getResult();
     }
 
     /**
      * 获取UTM活动转化统计
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getUtmCampaignStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $qb = $this->getEntityManager()->createQueryBuilder();
-        $qb->select('p.campaign, COUNT(c.id) as count, SUM(c.value) as total_value')
-            ->from(UtmConversion::class, 'c')
+        $qb = $this->createQueryBuilder('c')
+            ->select('p.campaign, COUNT(c.id) as count, SUM(c.value) as total_value')
             ->join('c.parameters', 'p')
             ->where('p.campaign IS NOT NULL')
-            ->groupBy('p.campaign');
+            ->groupBy('p.campaign')
+        ;
 
         if (null !== $startDate) {
             $qb->andWhere('c.createTime >= :startDate')
-                ->setParameter('startDate', $startDate);
+                ->setParameter('startDate', $startDate)
+            ;
         }
 
         if (null !== $endDate) {
             $qb->andWhere('c.createTime <= :endDate')
-                ->setParameter('endDate', $endDate);
+                ->setParameter('endDate', $endDate)
+            ;
         }
 
+        /** @var array<int, array<string, mixed>> */
         return $qb->getQuery()->getResult();
+    }
+
+    public function save(UtmConversion $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(UtmConversion $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

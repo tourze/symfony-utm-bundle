@@ -2,8 +2,9 @@
 
 namespace Tourze\UtmBundle\Service;
 
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
-use Tourze\UtmBundle\Entity\UtmParameters;
+use Tourze\UtmBundle\Entity\UtmParameter;
 use Tourze\UtmBundle\Entity\UtmSession;
 use Tourze\UtmBundle\Service\Storage\UtmStorageStrategyInterface;
 
@@ -12,25 +13,29 @@ use Tourze\UtmBundle\Service\Storage\UtmStorageStrategyInterface;
  *
  * 提供当前请求的UTM上下文信息
  */
+#[WithMonologChannel(channel: 'utm')]
 class UtmContextManager
 {
-    private ?UtmParameters $currentParameters = null;
+    private ?UtmParameter $currentParameters = null;
+
     private ?UtmSession $currentSession = null;
+
     private bool $initialized = false;
 
     public function __construct(
         private readonly UtmSessionManager $sessionManager,
         private readonly UtmStorageStrategyInterface $storageStrategy,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     /**
      * 获取当前UTM参数
      */
-    public function getCurrentParameters(): ?UtmParameters
+    public function getCurrentParameters(): ?UtmParameter
     {
         $this->initializeContext();
+
         return $this->currentParameters;
     }
 
@@ -40,6 +45,7 @@ class UtmContextManager
     public function getCurrentSession(): ?UtmSession
     {
         $this->initializeContext();
+
         return $this->currentSession;
     }
 
@@ -49,6 +55,7 @@ class UtmContextManager
     public function hasUtmContext(): bool
     {
         $this->initializeContext();
+
         return null !== $this->currentParameters || null !== $this->currentSession;
     }
 
@@ -72,7 +79,7 @@ class UtmContextManager
         // 处理不一致的状态（参数和会话之间的不一致）
         if (null !== $this->currentSession && null === $this->currentParameters) {
             $this->currentParameters = $this->currentSession->getParameters();
-            
+
             $this->logger->debug('从会话中恢复了UTM参数', [
                 'session_id' => $this->currentSession->getId(),
             ]);

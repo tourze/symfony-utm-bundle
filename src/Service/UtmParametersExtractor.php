@@ -2,6 +2,7 @@
 
 namespace Tourze\UtmBundle\Service;
 
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Tourze\UtmBundle\Dto\UtmParametersDto;
@@ -11,22 +12,26 @@ use Tourze\UtmBundle\Dto\UtmParametersDto;
  *
  * 负责从HTTP请求中提取标准和自定义UTM参数
  */
+#[WithMonologChannel(channel: 'utm')]
 class UtmParametersExtractor
 {
+    /**
+     * @var array<string>
+     */
     private readonly array $allowedParameters;
-    private readonly array $customParameters;
 
+    /**
+     * @param array<string> $allowedParameters
+     * @param array<string> $customParameters
+     */
     public function __construct(
         private readonly LoggerInterface $logger,
         array $allowedParameters = [],
-        array $customParameters = []
-    )
-    {
-        $this->allowedParameters = !empty($allowedParameters)
+        private readonly array $customParameters = [],
+    ) {
+        $this->allowedParameters = [] !== $allowedParameters
             ? $allowedParameters
             : ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
-
-        $this->customParameters = $customParameters;
     }
 
     /**
@@ -34,6 +39,7 @@ class UtmParametersExtractor
      */
     public function extract(Request $request): UtmParametersDto
     {
+        /** @var array<string, mixed> $parameters */
         $parameters = [];
 
         // 从GET参数中提取

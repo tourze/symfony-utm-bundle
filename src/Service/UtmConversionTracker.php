@@ -3,6 +3,7 @@
 namespace Tourze\UtmBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -17,6 +18,7 @@ use Tourze\UtmBundle\Repository\UtmConversionRepository;
  *
  * 负责跟踪转化事件并关联UTM数据
  */
+#[WithMonologChannel(channel: 'utm')]
 class UtmConversionTracker
 {
     public function __construct(
@@ -26,15 +28,17 @@ class UtmConversionTracker
         private readonly ?TokenStorageInterface $tokenStorage,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly UtmConversionRepository $utmConversionRepository,
-        private readonly LoggerInterface $logger
-    ) {}
+        private readonly LoggerInterface $logger,
+    ) {
+    }
 
     /**
      * 跟踪转化事件
      *
-     * @param string $eventName 事件名称
-     * @param float|null $value 转化价值
-     * @param array $metadata 额外元数据
+     * @param string     $eventName 事件名称
+     * @param float|null $value     转化价值
+     * @param array<string, mixed> $metadata  额外元数据
+     *
      * @return UtmConversion 创建的转化记录
      */
     public function trackConversion(string $eventName, ?float $value = null, array $metadata = []): UtmConversion
@@ -47,14 +51,13 @@ class UtmConversionTracker
         $userIdentifier = $this->getUserIdentifier();
 
         // 创建转化记录
-        $conversion = $this->utmConversionRepository->createConversion(
-            $eventName,
-            $parameters,
-            $session,
-            $userIdentifier,
-            $value ?? 0.0,
-            $metadata
-        );
+        $conversion = new UtmConversion();
+        $conversion->setEventName($eventName);
+        $conversion->setParameters($parameters);
+        $conversion->setSession($session);
+        $conversion->setUserIdentifier($userIdentifier);
+        $conversion->setValue($value ?? 0.0);
+        $conversion->setMetadata($metadata);
 
         // 存储转化记录
         $this->entityManager->persist($conversion);
@@ -82,23 +85,55 @@ class UtmConversionTracker
     private function getUserIdentifier(): string
     {
         // 首先检查UTM会话
-        $session = $this->contextManager->getCurrentSession();
-        if (null !== $session && null !== $session->getUserIdentifier()) {
-            return $session->getUserIdentifier();
+        $userIdentifier = $this->getUserIdentifierFromUtmSession();
+        if (null !== $userIdentifier) {
+            return $userIdentifier;
         }
 
         // 然后检查安全令牌
-        if (null !== $this->tokenStorage) {
-            $token = $this->tokenStorage->getToken();
-            if (null !== $token) {
-                $user = $token->getUser();
-                if ($user instanceof UserInterface) {
-                    return $user->getUserIdentifier();
-                }
-            }
+        $userIdentifier = $this->getUserIdentifierFromSecurityToken();
+        if (null !== $userIdentifier) {
+            return $userIdentifier;
         }
 
         // 最后，使用会话ID作为匿名标识符
+        return $this->generateAnonymousIdentifier();
+    }
+
+    /**
+     * 从UTM会话获取用户标识符
+     */
+    private function getUserIdentifierFromUtmSession(): ?string
+    {
+        $session = $this->contextManager->getCurrentSession();
+
+        return $session?->getUserIdentifier();
+    }
+
+    /**
+     * 从安全令牌获取用户标识符
+     */
+    private function getUserIdentifierFromSecurityToken(): ?string
+    {
+        if (null === $this->tokenStorage) {
+            return null;
+        }
+
+        $token = $this->tokenStorage->getToken();
+        if (null === $token) {
+            return null;
+        }
+
+        $user = $token->getUser();
+
+        return ($user instanceof UserInterface) ? $user->getUserIdentifier() : null;
+    }
+
+    /**
+     * 生成匿名用户标识符
+     */
+    private function generateAnonymousIdentifier(): string
+    {
         $session = $this->requestStack->getSession();
         if ($session->isStarted()) {
             return 'anonymous_' . $session->getId();
@@ -109,6 +144,8 @@ class UtmConversionTracker
 
     /**
      * 查找特定事件的转化
+     *
+     * @return array<UtmConversion>
      */
     public function findConversions(string $eventName, ?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
@@ -117,6 +154,8 @@ class UtmConversionTracker
 
     /**
      * 获取用户的转化
+     *
+     * @return array<UtmConversion>
      */
     public function findUserConversions(string $userIdentifier, ?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
@@ -125,6 +164,8 @@ class UtmConversionTracker
 
     /**
      * 获取转化事件统计
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getConversionStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
@@ -133,6 +174,8 @@ class UtmConversionTracker
 
     /**
      * 获取UTM来源统计
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getUtmSourceStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
@@ -141,6 +184,8 @@ class UtmConversionTracker
 
     /**
      * 获取UTM媒介统计
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getUtmMediumStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
@@ -149,6 +194,8 @@ class UtmConversionTracker
 
     /**
      * 获取UTM活动统计
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getUtmCampaignStats(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {

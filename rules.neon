@@ -1,0 +1,5 @@
+parameters:
+    ignoreErrors:
+        # 忽略 DataFixture 命名规则冲突 - RequireDataFixtureForEntityRule 期望复数形式，DataFixtureNamespaceRule 期望单数形式
+        # UtmParameters 是一个包含多个参数的实体，已采用复数形式命名来保持与实体名称一致性
+        - '#DataFixture 类名中的实体部分 "UtmParameters" 应该使用单数形式#'

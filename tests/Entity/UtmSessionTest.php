@@ -2,59 +2,32 @@
 
 namespace Tourze\UtmBundle\Tests\Entity;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Tourze\UtmBundle\Entity\UtmParameters;
+use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
+use Tourze\UtmBundle\Entity\UtmParameter;
 use Tourze\UtmBundle\Entity\UtmSession;
 
-class UtmSessionTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(UtmSession::class)]
+final class UtmSessionTest extends AbstractEntityTestCase
 {
-    public function testGettersAndSetters(): void
+    protected function createEntity(): object
     {
-        $session = new UtmSession();
+        return new UtmSession();
+    }
 
-        // 初始化必需的属性
-        $reflectionClass = new \ReflectionClass(UtmSession::class);
-        $sessionIdProperty = $reflectionClass->getProperty('sessionId');
-        $sessionIdProperty->setAccessible(true);
-        $sessionIdProperty->setValue($session, 'default_session_id');
-
-        // Test sessionId
-        $this->assertSame('default_session_id', $session->getSessionId());
-        $session->setSessionId('test_session_id');
-        $this->assertSame('test_session_id', $session->getSessionId());
-
-        // Test parameters
-        $this->assertNull($session->getParameters());
-        $parameters = new UtmParameters();
-        $session->setParameters($parameters);
-        $this->assertSame($parameters, $session->getParameters());
-
-        // Test userIdentifier
-        $this->assertNull($session->getUserIdentifier());
-        $session->setUserIdentifier('test_user');
-        $this->assertSame('test_user', $session->getUserIdentifier());
-
-        // Test clientIp
-        $this->assertNull($session->getClientIp());
-        $session->setClientIp('127.0.0.1');
-        $this->assertSame('127.0.0.1', $session->getClientIp());
-
-        // Test userAgent
-        $this->assertNull($session->getUserAgent());
-        $session->setUserAgent('Mozilla/5.0');
-        $this->assertSame('Mozilla/5.0', $session->getUserAgent());
-
-        // Test expiresAt
-        $this->assertNull($session->getExpiresAt());
-        $expiresAt = new \DateTime('+30 days');
-        $session->setExpiresAt($expiresAt);
-        $this->assertSame($expiresAt, $session->getExpiresAt());
-
-        // Test metadata
-        $this->assertEmpty($session->getMetadata());
-        $metadata = ['key' => 'value'];
-        $session->setMetadata($metadata);
-        $this->assertSame($metadata, $session->getMetadata());
+    /**
+     * @return iterable<string, array{string, mixed}>
+     */
+    public static function propertiesProvider(): iterable
+    {
+        return [
+            'sessionId' => ['sessionId', 'test_value'],
+            'metadata' => ['metadata', ['key' => 'value']],
+        ];
     }
 
     public function testAddMetadata(): void
@@ -75,14 +48,14 @@ class UtmSessionTest extends TestCase
         $session->addMetadata('key2', 'value2');
         $this->assertSame([
             'key1' => 'value1',
-            'key2' => 'value2'
+            'key2' => 'value2',
         ], $session->getMetadata());
 
         // Test overwriting an existing metadata item
         $session->addMetadata('key1', 'new_value');
         $this->assertSame([
             'key1' => 'new_value',
-            'key2' => 'value2'
+            'key2' => 'value2',
         ], $session->getMetadata());
     }
 
@@ -100,12 +73,12 @@ class UtmSessionTest extends TestCase
         $this->assertFalse($session->isExpired());
 
         // 未来的过期时间应该返回false
-        $futureDate = new \DateTime('+1 day');
+        $futureDate = new \DateTimeImmutable('+1 day');
         $session->setExpiresAt($futureDate);
         $this->assertFalse($session->isExpired());
 
         // 过去的过期时间应该返回true
-        $pastDate = new \DateTime('-1 day');
+        $pastDate = new \DateTimeImmutable('-1 day');
         $session->setExpiresAt($pastDate);
         $this->assertTrue($session->isExpired());
     }

@@ -1,0 +1,25 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  Tourze\UtmBundle\DataFixtures\:
+    resource: '../../DataFixtures/*'
+    tags: ['doctrine.fixture.orm']
+
+  # 测试环境特定配置
+  Tourze\UtmBundle\Service\Storage\DatabaseStorageStrategy:
+    arguments:
+      $sessionKey: 'test_utm_session_id'
+      $lifetime: 7200
+
+  Tourze\UtmBundle\Service\UtmSessionManager:
+    arguments:
+      $sessionLifetime: 3600
+
+  # 定义测试用的 logger 服务
+  monolog.logger.utm:
+    class: Psr\Log\NullLogger
+
+  # 为 logger 设置别名
+  Psr\Log\LoggerInterface: '@monolog.logger.utm'

@@ -2,19 +2,17 @@
 
 namespace Tourze\UtmBundle\Repository;
 
-use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 use Tourze\UtmBundle\Entity\UtmSession;
 
 /**
  * UTM会话仓库
  *
- * @method UtmSession|null find($id, $lockMode = null, $lockVersion = null)
- * @method UtmSession|null findOneBy(array $criteria, array $orderBy = null)
- * @method UtmSession[]    findAll()
- * @method UtmSession[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<UtmSession>
  */
+#[AsRepository(entityClass: UtmSession::class)]
 class UtmSessionRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -31,34 +29,21 @@ class UtmSessionRepository extends ServiceEntityRepository
     }
 
     /**
-     * 创建新的UTM会话
-     */
-    public function createSession(string $sessionId, ?string $userIdentifier = null): UtmSession
-    {
-        $session = new UtmSession();
-        $session->setSessionId($sessionId);
-
-        if (!empty($userIdentifier)) {
-            $session->setUserIdentifier($userIdentifier);
-        }
-
-        return $session;
-    }
-
-    /**
      * 根据用户标识符查找活跃会话
      *
-     * @return UtmSession[]
+     * @return array<UtmSession>
      */
     public function findActiveByUserIdentifier(string $userIdentifier): array
     {
+        /** @var array<UtmSession> */
         return $this->createQueryBuilder('s')
             ->where('s.userIdentifier = :userIdentifier')
             ->andWhere('s.expiresAt IS NULL OR s.expiresAt > :now')
             ->setParameter('userIdentifier', $userIdentifier)
-            ->setParameter('now', new DateTimeImmutable())
+            ->setParameter('now', new \DateTimeImmutable())
             ->getQuery()
-            ->getResult();
+            ->getResult()
+        ;
     }
 
     /**
@@ -66,11 +51,33 @@ class UtmSessionRepository extends ServiceEntityRepository
      */
     public function cleanExpiredSessions(): int
     {
-        return $this->createQueryBuilder('s')
+        $affectedRows = $this->createQueryBuilder('s')
             ->delete()
             ->where('s.expiresAt IS NOT NULL AND s.expiresAt < :now')
-            ->setParameter('now', new DateTimeImmutable())
+            ->setParameter('now', new \DateTimeImmutable())
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
+        assert(is_int($affectedRows));
+
+        return $affectedRows;
+    }
+
+    public function save(UtmSession $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(UtmSession $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

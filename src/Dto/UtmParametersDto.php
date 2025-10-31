@@ -36,31 +36,59 @@ class UtmParametersDto
 
     /**
      * 自定义UTM参数
+     * @var array<string, mixed>
      */
     private array $additionalParameters = [];
 
     /**
      * 从请求参数数组创建DTO
+     * @param array<string, mixed> $parameters
      */
     public static function fromArray(array $parameters): self
     {
         $dto = new self();
 
-        // 设置标准UTM参数
-        $dto->source = $parameters['utm_source'] ?? null;
-        $dto->medium = $parameters['utm_medium'] ?? null;
-        $dto->campaign = $parameters['utm_campaign'] ?? null;
-        $dto->term = $parameters['utm_term'] ?? null;
-        $dto->content = $parameters['utm_content'] ?? null;
-
-        // 处理附加参数
-        foreach ($parameters as $key => $value) {
-            if (strpos($key, 'utm_') === 0 && !in_array($key, ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'])) {
-                $dto->additionalParameters[substr($key, 4)] = $value; // 去掉'utm_'前缀
-            }
-        }
+        self::setStandardParameters($dto, $parameters);
+        self::setAdditionalParametersFromArray($dto, $parameters);
 
         return $dto;
+    }
+
+    /**
+     * 设置标准UTM参数
+     * @param array<string, mixed> $parameters
+     */
+    private static function setStandardParameters(self $dto, array $parameters): void
+    {
+        $dto->source = self::extractStringParameter($parameters, 'utm_source');
+        $dto->medium = self::extractStringParameter($parameters, 'utm_medium');
+        $dto->campaign = self::extractStringParameter($parameters, 'utm_campaign');
+        $dto->term = self::extractStringParameter($parameters, 'utm_term');
+        $dto->content = self::extractStringParameter($parameters, 'utm_content');
+    }
+
+    /**
+     * 设置附加参数
+     * @param array<string, mixed> $parameters
+     */
+    private static function setAdditionalParametersFromArray(self $dto, array $parameters): void
+    {
+        $standardKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+
+        foreach ($parameters as $key => $value) {
+            if (0 === strpos($key, 'utm_') && !in_array($key, $standardKeys, true)) {
+                $dto->additionalParameters[substr($key, 4)] = $value;
+            }
+        }
+    }
+
+    /**
+     * 从参数数组中提取字符串参数
+     * @param array<string, mixed> $parameters
+     */
+    private static function extractStringParameter(array $parameters, string $key): ?string
+    {
+        return isset($parameters[$key]) && is_string($parameters[$key]) ? $parameters[$key] : null;
     }
 
     /**
@@ -68,39 +96,40 @@ class UtmParametersDto
      */
     public function hasAnyParameter(): bool
     {
-        return $this->source !== null
-            || $this->medium !== null
-            || $this->campaign !== null
-            || $this->term !== null
-            || $this->content !== null
-            || !empty($this->additionalParameters);
+        return null !== $this->source
+            || null !== $this->medium
+            || null !== $this->campaign
+            || null !== $this->term
+            || null !== $this->content
+            || [] !== $this->additionalParameters;
     }
 
     /**
      * 转换成数组
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
         $result = [];
 
         // 添加标准参数
-        if ($this->source !== null) {
+        if (null !== $this->source) {
             $result['utm_source'] = $this->source;
         }
 
-        if ($this->medium !== null) {
+        if (null !== $this->medium) {
             $result['utm_medium'] = $this->medium;
         }
 
-        if ($this->campaign !== null) {
+        if (null !== $this->campaign) {
             $result['utm_campaign'] = $this->campaign;
         }
 
-        if ($this->term !== null) {
+        if (null !== $this->term) {
             $result['utm_term'] = $this->term;
         }
 
-        if ($this->content !== null) {
+        if (null !== $this->content) {
             $result['utm_content'] = $this->content;
         }
 
@@ -117,10 +146,9 @@ class UtmParametersDto
         return $this->source;
     }
 
-    public function setSource(?string $source): self
+    public function setSource(?string $source): void
     {
         $this->source = $source;
-        return $this;
     }
 
     public function getMedium(): ?string
@@ -128,10 +156,9 @@ class UtmParametersDto
         return $this->medium;
     }
 
-    public function setMedium(?string $medium): self
+    public function setMedium(?string $medium): void
     {
         $this->medium = $medium;
-        return $this;
     }
 
     public function getCampaign(): ?string
@@ -139,10 +166,9 @@ class UtmParametersDto
         return $this->campaign;
     }
 
-    public function setCampaign(?string $campaign): self
+    public function setCampaign(?string $campaign): void
     {
         $this->campaign = $campaign;
-        return $this;
     }
 
     public function getTerm(): ?string
@@ -150,10 +176,9 @@ class UtmParametersDto
         return $this->term;
     }
 
-    public function setTerm(?string $term): self
+    public function setTerm(?string $term): void
     {
         $this->term = $term;
-        return $this;
     }
 
     public function getContent(): ?string
@@ -161,26 +186,29 @@ class UtmParametersDto
         return $this->content;
     }
 
-    public function setContent(?string $content): self
+    public function setContent(?string $content): void
     {
         $this->content = $content;
-        return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getAdditionalParameters(): array
     {
         return $this->additionalParameters;
     }
 
-    public function setAdditionalParameters(array $additionalParameters): self
+    /**
+     * @param array<string, mixed> $additionalParameters
+     */
+    public function setAdditionalParameters(array $additionalParameters): void
     {
         $this->additionalParameters = $additionalParameters;
-        return $this;
     }
 
-    public function addAdditionalParameter(string $key, mixed $value): self
+    public function addAdditionalParameter(string $key, mixed $value): void
     {
         $this->additionalParameters[$key] = $value;
-        return $this;
     }
 }

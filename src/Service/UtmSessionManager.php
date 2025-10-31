@@ -3,19 +3,21 @@
 namespace Tourze\UtmBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Tourze\UtmBundle\Entity\UtmParameters;
+use Tourze\UtmBundle\Entity\UtmParameter;
 use Tourze\UtmBundle\Entity\UtmSession;
+use Tourze\UtmBundle\Exception\UtmSessionException;
 use Tourze\UtmBundle\Repository\UtmSessionRepository;
 use Tourze\UtmBundle\Service\Storage\UtmStorageStrategyInterface;
-use Tourze\UtmBundle\Exception\UtmSessionException;
 
 /**
  * UTM会话管理器
  *
  * 管理UTM会话生命周期，处理会话合并和过期
  */
+#[WithMonologChannel(channel: 'utm')]
 class UtmSessionManager
 {
     public function __construct(
@@ -24,13 +26,14 @@ class UtmSessionManager
         private readonly UtmStorageStrategyInterface $storageStrategy,
         private readonly UtmSessionRepository $utmSessionRepository,
         private readonly LoggerInterface $logger,
-        private readonly int $sessionLifetime = 2592000 // 默认30天（单位：秒）
-    ) {}
+        private readonly int $sessionLifetime = 2592000, // 默认30天（单位：秒）
+    ) {
+    }
 
     /**
      * 创建新的UTM会话
      */
-    public function createSession(UtmParameters $parameters): UtmSession
+    public function createSession(UtmParameter $parameters): UtmSession
     {
         $request = $this->requestStack->getCurrentRequest();
         $session = $this->requestStack->getSession();
@@ -40,11 +43,12 @@ class UtmSessionManager
         }
 
         // 创建新会话
-        $utmSession = $this->utmSessionRepository->createSession($session->getId());
-        $utmSession->setParameters($parameters)
-            ->setClientIp($request->getClientIp())
-            ->setUserAgent($request->headers->get('User-Agent'))
-            ->setExpiresAt(new \DateTime(sprintf('+%d seconds', $this->sessionLifetime)));
+        $utmSession = new UtmSession();
+        $utmSession->setSessionId($session->getId());
+        $utmSession->setParameters($parameters);
+        $utmSession->setClientIp($request->getClientIp());
+        $utmSession->setUserAgent($request->headers->get('User-Agent'));
+        $utmSession->setExpiresAt(new \DateTimeImmutable(sprintf('+%d seconds', $this->sessionLifetime)));
 
         // 存储到数据库
         $this->entityManager->persist($utmSession);
@@ -52,7 +56,7 @@ class UtmSessionManager
 
         $this->logger->debug('创建了新的UTM会话', [
             'session_id' => $utmSession->getId(),
-            'expires_at' => $utmSession->getExpiresAt()->format('Y-m-d H:i:s'),
+            'expires_at' => $utmSession->getExpiresAt()?->format('Y-m-d H:i:s'),
             'utm_source' => $parameters->getSource(),
             'utm_medium' => $parameters->getMedium(),
             'utm_campaign' => $parameters->getCampaign(),
@@ -87,13 +91,13 @@ class UtmSessionManager
 
         // 更新会话过期时间
         if ($this->shouldRenewSession($utmSession)) {
-            $utmSession->setExpiresAt(new \DateTime(sprintf('+%d seconds', $this->sessionLifetime)));
+            $utmSession->setExpiresAt(new \DateTimeImmutable(sprintf('+%d seconds', $this->sessionLifetime)));
             $this->entityManager->persist($utmSession);
             $this->entityManager->flush();
 
             $this->logger->debug('更新了UTM会话过期时间', [
                 'session_id' => $utmSession->getId(),
-                'expires_at' => $utmSession->getExpiresAt()->format('Y-m-d H:i:s'),
+                'expires_at' => $utmSession->getExpiresAt()?->format('Y-m-d H:i:s'),
             ]);
         }
 
@@ -111,10 +115,11 @@ class UtmSessionManager
             // 没有现有会话，尝试查找用户的其他活动会话
             $activeSessions = $this->utmSessionRepository->findActiveByUserIdentifier($userIdentifier);
 
-            if (empty($activeSessions)) {
+            if ([] === $activeSessions) {
                 $this->logger->debug('没有要关联的UTM会话', [
                     'user_identifier' => $userIdentifier,
                 ]);
+
                 return;
             }
 
@@ -158,7 +163,7 @@ class UtmSessionManager
 
         // 如果会话将在一半生命周期内过期，则更新它
         $halfLifetime = $this->sessionLifetime / 2;
-        $halfLifetimeLater = new \DateTime(sprintf('+%d seconds', $halfLifetime));
+        $halfLifetimeLater = new \DateTimeImmutable(sprintf('+%d seconds', $halfLifetime));
 
         return $session->getExpiresAt() < $halfLifetimeLater;
     }

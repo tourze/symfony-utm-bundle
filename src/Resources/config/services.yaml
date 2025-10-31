@@ -3,12 +3,25 @@ services:
   _defaults:
     autowire: true      # Automatically injects dependencies in your services.
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+    public: false       # Services are private by default
 
   Tourze\UtmBundle\Controller\:
     resource: '../../Controller/'
+    public: true
+
   Tourze\UtmBundle\EventListener\:
     resource: '../../EventListener/'
+    public: true
+
   Tourze\UtmBundle\Repository\:
     resource: '../../Repository/'
+    public: true
+
   Tourze\UtmBundle\Service\:
     resource: '../../Service/'
+    public: true
+
+  # 默认存储策略别名 - 使用 Session 存储作为默认实现
+  Tourze\UtmBundle\Service\Storage\UtmStorageStrategyInterface:
+    alias: Tourze\UtmBundle\Service\Storage\SessionStorageStrategy
+

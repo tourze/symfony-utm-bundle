@@ -2,12 +2,17 @@
 
 namespace Tourze\UtmBundle\Tests\Dto;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tourze\UtmBundle\Dto\UtmParametersDto;
 
-class UtmParametersDtoTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(UtmParametersDto::class)]
+final class UtmParametersDtoTest extends TestCase
 {
-    public function testFromArray_withStandardParameters_populatesFields(): void
+    public function testFromArrayWithStandardParametersPopulatesFields(): void
     {
         $parameters = [
             'utm_source' => 'google',
@@ -27,13 +32,13 @@ class UtmParametersDtoTest extends TestCase
         $this->assertEmpty($dto->getAdditionalParameters());
     }
 
-    public function testFromArray_withAdditionalParameters_populatesAdditionalParameters(): void
+    public function testFromArrayWithAdditionalParametersPopulatesAdditionalParameters(): void
     {
         $parameters = [
             'utm_source' => 'facebook',
             'utm_custom1' => 'value1',
             'utm_custom2' => 'value2',
-            'other_param' => 'should_be_ignored'
+            'other_param' => 'should_be_ignored',
         ];
 
         $dto = UtmParametersDto::fromArray($parameters);
@@ -43,7 +48,7 @@ class UtmParametersDtoTest extends TestCase
         $this->assertNull($dto->getCampaign());
         $this->assertNull($dto->getTerm());
         $this->assertNull($dto->getContent());
-        
+
         $additionalParams = $dto->getAdditionalParameters();
         $this->assertCount(2, $additionalParams);
         $this->assertSame('value1', $additionalParams['custom1']);
@@ -51,7 +56,7 @@ class UtmParametersDtoTest extends TestCase
         $this->assertArrayNotHasKey('other_param', $additionalParams);
     }
 
-    public function testFromArray_withEmptyArray_returnsEmptyDto(): void
+    public function testFromArrayWithEmptyArrayReturnsEmptyDto(): void
     {
         $dto = UtmParametersDto::fromArray([]);
 
@@ -64,14 +69,14 @@ class UtmParametersDtoTest extends TestCase
         $this->assertFalse($dto->hasAnyParameter());
     }
 
-    public function testToArray_withStandardParameters_returnsCorrectArray(): void
+    public function testToArrayWithStandardParametersReturnsCorrectArray(): void
     {
         $dto = new UtmParametersDto();
-        $dto->setSource('google')
-            ->setMedium('cpc')
-            ->setCampaign('spring_sale')
-            ->setTerm('running shoes')
-            ->setContent('banner_1');
+        $dto->setSource('google');
+        $dto->setMedium('cpc');
+        $dto->setCampaign('spring_sale');
+        $dto->setTerm('running shoes');
+        $dto->setContent('banner_1');
 
         $array = $dto->toArray();
 
@@ -83,14 +88,14 @@ class UtmParametersDtoTest extends TestCase
         $this->assertSame('banner_1', $array['utm_content']);
     }
 
-    public function testToArray_withAdditionalParameters_includesAdditionalParameters(): void
+    public function testToArrayWithAdditionalParametersIncludesAdditionalParameters(): void
     {
         $dto = new UtmParametersDto();
-        $dto->setSource('facebook')
-            ->setAdditionalParameters([
-                'custom1' => 'value1',
-                'custom2' => 'value2'
-            ]);
+        $dto->setSource('facebook');
+        $dto->setAdditionalParameters([
+            'custom1' => 'value1',
+            'custom2' => 'value2',
+        ]);
 
         $array = $dto->toArray();
 
@@ -100,7 +105,7 @@ class UtmParametersDtoTest extends TestCase
         $this->assertSame('value2', $array['utm_custom2']);
     }
 
-    public function testToArray_withEmptyDto_returnsEmptyArray(): void
+    public function testToArrayWithEmptyDtoReturnsEmptyArray(): void
     {
         $dto = new UtmParametersDto();
         $array = $dto->toArray();
@@ -108,55 +113,55 @@ class UtmParametersDtoTest extends TestCase
         $this->assertEmpty($array);
     }
 
-    public function testHasAnyParameter_withNoParameters_returnsFalse(): void
+    public function testHasAnyParameterWithNoParametersReturnsFalse(): void
     {
         $dto = new UtmParametersDto();
         $this->assertFalse($dto->hasAnyParameter());
     }
 
-    public function testHasAnyParameter_withSource_returnsTrue(): void
+    public function testHasAnyParameterWithSourceReturnsTrue(): void
     {
         $dto = new UtmParametersDto();
         $dto->setSource('google');
         $this->assertTrue($dto->hasAnyParameter());
     }
 
-    public function testHasAnyParameter_withMedium_returnsTrue(): void
+    public function testHasAnyParameterWithMediumReturnsTrue(): void
     {
         $dto = new UtmParametersDto();
         $dto->setMedium('cpc');
         $this->assertTrue($dto->hasAnyParameter());
     }
 
-    public function testHasAnyParameter_withCampaign_returnsTrue(): void
+    public function testHasAnyParameterWithCampaignReturnsTrue(): void
     {
         $dto = new UtmParametersDto();
         $dto->setCampaign('spring_sale');
         $this->assertTrue($dto->hasAnyParameter());
     }
 
-    public function testHasAnyParameter_withTerm_returnsTrue(): void
+    public function testHasAnyParameterWithTermReturnsTrue(): void
     {
         $dto = new UtmParametersDto();
         $dto->setTerm('running shoes');
         $this->assertTrue($dto->hasAnyParameter());
     }
 
-    public function testHasAnyParameter_withContent_returnsTrue(): void
+    public function testHasAnyParameterWithContentReturnsTrue(): void
     {
         $dto = new UtmParametersDto();
         $dto->setContent('banner_1');
         $this->assertTrue($dto->hasAnyParameter());
     }
 
-    public function testHasAnyParameter_withAdditionalParameters_returnsTrue(): void
+    public function testHasAnyParameterWithAdditionalParametersReturnsTrue(): void
     {
         $dto = new UtmParametersDto();
         $dto->setAdditionalParameters(['custom1' => 'value1']);
         $this->assertTrue($dto->hasAnyParameter());
     }
 
-    public function testAddAdditionalParameter_addsParameter(): void
+    public function testAddAdditionalParameterAddsParameter(): void
     {
         $dto = new UtmParametersDto();
         $dto->addAdditionalParameter('custom1', 'value1');
@@ -168,7 +173,7 @@ class UtmParametersDtoTest extends TestCase
         $this->assertSame('value2', $additionalParams['custom2']);
     }
 
-    public function testAddAdditionalParameter_overwritesExistingParameter(): void
+    public function testAddAdditionalParameterOverwritesExistingParameter(): void
     {
         $dto = new UtmParametersDto();
         $dto->addAdditionalParameter('custom', 'value1');
@@ -178,4 +183,4 @@ class UtmParametersDtoTest extends TestCase
         $this->assertCount(1, $additionalParams);
         $this->assertSame('value2', $additionalParams['custom']);
     }
-} 
+}

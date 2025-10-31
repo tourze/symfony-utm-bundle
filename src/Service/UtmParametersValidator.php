@@ -2,23 +2,27 @@
 
 namespace Tourze\UtmBundle\Service;
 
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use Tourze\UtmBundle\Dto\UtmParametersDto;
+use Tourze\UtmBundle\Exception\UtmParameterException;
 
 /**
  * UTM参数验证服务
  *
  * 负责验证UTM参数，过滤无效值，标准化数据
  */
+#[WithMonologChannel(channel: 'utm')]
 class UtmParametersValidator
 {
     private readonly int $maxLength;
+
     private readonly bool $sanitize;
 
     public function __construct(
         private readonly LoggerInterface $logger,
         ?int $maxLength = null,
-        ?bool $sanitize = null
+        ?bool $sanitize = null,
     ) {
         $this->maxLength = $maxLength ?? 255;
         $this->sanitize = $sanitize ?? true;
@@ -28,6 +32,7 @@ class UtmParametersValidator
      * 验证UTM参数
      *
      * @param UtmParametersDto $parametersDto 原始UTM参数
+     *
      * @return UtmParametersDto 验证后的UTM参数
      */
     public function validate(UtmParametersDto $parametersDto): UtmParametersDto
@@ -38,114 +43,24 @@ class UtmParametersValidator
 
         $validatedDto = new UtmParametersDto();
         $originalParameters = $parametersDto->toArray();
+        /** @var array<string> $validKeys */
         $validKeys = [];
 
         // 验证标准UTM参数
-        $source = $parametersDto->getSource();
-        if (!empty($source) || $source === '0') {
-            $validSource = $this->sanitizeValue($source);
-            if (strlen($validSource) > $this->maxLength) {
-                $this->logger->warning('UTM参数值过长，已截断', [
-                    'parameter' => 'utm_source',
-                    'original_length' => strlen($validSource),
-                    'max_length' => $this->maxLength,
-                ]);
-                $validSource = substr($validSource, 0, $this->maxLength);
-            }
-            $validatedDto->setSource($validSource);
-            $validKeys[] = 'utm_source';
-        }
-
-        $medium = $parametersDto->getMedium();
-        if (!empty($medium) || $medium === '0') {
-            $validMedium = $this->sanitizeValue($medium);
-            if (strlen($validMedium) > $this->maxLength) {
-                $this->logger->warning('UTM参数值过长，已截断', [
-                    'parameter' => 'utm_medium',
-                    'original_length' => strlen($validMedium),
-                    'max_length' => $this->maxLength,
-                ]);
-                $validMedium = substr($validMedium, 0, $this->maxLength);
-            }
-            $validatedDto->setMedium($validMedium);
-            $validKeys[] = 'utm_medium';
-        }
-
-        $campaign = $parametersDto->getCampaign();
-        if (!empty($campaign) || $campaign === '0') {
-            $validCampaign = $this->sanitizeValue($campaign);
-            if (strlen($validCampaign) > $this->maxLength) {
-                $this->logger->warning('UTM参数值过长，已截断', [
-                    'parameter' => 'utm_campaign',
-                    'original_length' => strlen($validCampaign),
-                    'max_length' => $this->maxLength,
-                ]);
-                $validCampaign = substr($validCampaign, 0, $this->maxLength);
-            }
-            $validatedDto->setCampaign($validCampaign);
-            $validKeys[] = 'utm_campaign';
-        }
-
-        $term = $parametersDto->getTerm();
-        if (!empty($term) || $term === '0') {
-            $validTerm = $this->sanitizeValue($term);
-            if (strlen($validTerm) > $this->maxLength) {
-                $this->logger->warning('UTM参数值过长，已截断', [
-                    'parameter' => 'utm_term',
-                    'original_length' => strlen($validTerm),
-                    'max_length' => $this->maxLength,
-                ]);
-                $validTerm = substr($validTerm, 0, $this->maxLength);
-            }
-            $validatedDto->setTerm($validTerm);
-            $validKeys[] = 'utm_term';
-        }
-
-        $content = $parametersDto->getContent();
-        if (!empty($content) || $content === '0') {
-            $validContent = $this->sanitizeValue($content);
-            if (strlen($validContent) > $this->maxLength) {
-                $this->logger->warning('UTM参数值过长，已截断', [
-                    'parameter' => 'utm_content',
-                    'original_length' => strlen($validContent),
-                    'max_length' => $this->maxLength,
-                ]);
-                $validContent = substr($validContent, 0, $this->maxLength);
-            }
-            $validatedDto->setContent($validContent);
-            $validKeys[] = 'utm_content';
-        }
+        $validKeys = $this->validateStandardParameter($parametersDto->getSource(), 'source', $validatedDto, $validKeys);
+        $validKeys = $this->validateStandardParameter($parametersDto->getMedium(), 'medium', $validatedDto, $validKeys);
+        $validKeys = $this->validateStandardParameter($parametersDto->getCampaign(), 'campaign', $validatedDto, $validKeys);
+        $validKeys = $this->validateStandardParameter($parametersDto->getTerm(), 'term', $validatedDto, $validKeys);
+        $validKeys = $this->validateStandardParameter($parametersDto->getContent(), 'content', $validatedDto, $validKeys);
 
         // 验证附加参数
-        $additionalParams = [];
-        foreach ($parametersDto->getAdditionalParameters() as $key => $value) {
-            if (empty($value) && $value !== '0') {
-                continue;
-            }
-
-            $validValue = $this->sanitizeValue($value);
-            if (strlen($validValue) > $this->maxLength) {
-                $this->logger->warning('UTM附加参数值过长，已截断', [
-                    'parameter' => 'utm_' . $key,
-                    'original_length' => strlen($validValue),
-                    'max_length' => $this->maxLength,
-                ]);
-                $validValue = substr($validValue, 0, $this->maxLength);
-            }
-
-            $additionalParams[$key] = $validValue;
-            $validKeys[] = 'utm_' . $key;
-        }
-
-        if (!empty($additionalParams)) {
-            $validatedDto->setAdditionalParameters($additionalParams);
-        }
+        $validKeys = $this->validateAdditionalParameters($parametersDto, $validatedDto, $validKeys);
 
         // 记录被过滤的参数
         $originalKeys = array_keys($originalParameters);
         $filteredKeys = array_diff($originalKeys, $validKeys);
 
-        if (!empty($filteredKeys)) {
+        if ([] !== $filteredKeys) {
             $this->logger->info('某些UTM参数被过滤', [
                 'original' => $originalKeys,
                 'validated' => $validKeys,
@@ -157,12 +72,99 @@ class UtmParametersValidator
     }
 
     /**
+     * 验证单个标准UTM参数
+     */
+    /**
+     * @param array<string> $validKeys
+     * @return array<string>
+     */
+    private function validateStandardParameter(?string $value, string $parameterName, UtmParametersDto $validatedDto, array $validKeys): array
+    {
+        if (null === $value || '' === $value) {
+            return $validKeys;
+        }
+
+        $validValue = $this->sanitizeAndTruncateValue($value, 'utm_' . $parameterName);
+        $this->setParameterValue($validatedDto, $parameterName, $validValue);
+        $validKeys[] = 'utm_' . $parameterName;
+
+        return $validKeys;
+    }
+
+    /**
+     * 验证附加UTM参数
+     */
+    /**
+     * @param array<string> $validKeys
+     * @return array<string>
+     */
+    private function validateAdditionalParameters(UtmParametersDto $parametersDto, UtmParametersDto $validatedDto, array $validKeys): array
+    {
+        /** @var array<string, mixed> $additionalParams */
+        $additionalParams = [];
+        foreach ($parametersDto->getAdditionalParameters() as $key => $value) {
+            if (null === $value || '' === $value) {
+                continue;
+            }
+
+            $validValue = $this->sanitizeAndTruncateValue($value, 'utm_' . $key);
+            $additionalParams[$key] = $validValue;
+            $validKeys[] = 'utm_' . $key;
+        }
+
+        if ([] !== $additionalParams) {
+            $validatedDto->setAdditionalParameters($additionalParams);
+        }
+
+        return $validKeys;
+    }
+
+    /**
+     * 标准化并截断参数值
+     */
+    private function sanitizeAndTruncateValue(mixed $value, string $parameterName): string
+    {
+        $sanitizedValue = $this->sanitizeValue($value);
+
+        if (strlen($sanitizedValue) > $this->maxLength) {
+            $this->logger->warning('UTM参数值过长，已截断', [
+                'parameter' => $parameterName,
+                'original_length' => strlen($sanitizedValue),
+                'max_length' => $this->maxLength,
+            ]);
+
+            return substr($sanitizedValue, 0, $this->maxLength);
+        }
+
+        return $sanitizedValue;
+    }
+
+    /**
+     * 设置参数值到DTO
+     */
+    private function setParameterValue(UtmParametersDto $dto, string $parameterName, string $value): void
+    {
+        match ($parameterName) {
+            'source' => $dto->setSource($value),
+            'medium' => $dto->setMedium($value),
+            'campaign' => $dto->setCampaign($value),
+            'term' => $dto->setTerm($value),
+            'content' => $dto->setContent($value),
+            default => throw new UtmParameterException('Unsupported parameter: ' . $parameterName),
+        };
+    }
+
+    /**
      * 标准化参数值
      */
     private function sanitizeValue(mixed $value): string
     {
         if (!is_string($value)) {
-            $value = (string)$value;
+            if (is_scalar($value) || (is_object($value) && method_exists($value, '__toString'))) {
+                $value = (string) $value;
+            } else {
+                $value = '';
+            }
         }
 
         if (!$this->sanitize) {
@@ -173,8 +175,6 @@ class UtmParametersValidator
         $value = trim($value);
 
         // 过滤XSS风险字符
-        $value = htmlspecialchars($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-
-        return $value;
+        return htmlspecialchars($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 }

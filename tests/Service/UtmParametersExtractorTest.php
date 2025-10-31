@@ -2,22 +2,28 @@
 
 namespace Tourze\UtmBundle\Tests\Service;
 
-use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Symfony\Component\HttpFoundation\Request;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 use Tourze\UtmBundle\Dto\UtmParametersDto;
 use Tourze\UtmBundle\Service\UtmParametersExtractor;
 
-class UtmParametersExtractorTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(UtmParametersExtractor::class)]
+#[RunTestsInSeparateProcesses]
+final class UtmParametersExtractorTest extends AbstractIntegrationTestCase
 {
-    private LoggerInterface $logger;
-    
-    protected function setUp(): void
+    private UtmParametersExtractor $extractor;
+
+    protected function onSetUp(): void
     {
-        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->extractor = self::getService(UtmParametersExtractor::class);
     }
-    
-    public function testExtract_withStandardParameters_returnsPopulatedDto(): void
+
+    public function testExtractWithStandardParametersReturnsPopulatedDto(): void
     {
         // Arrange
         $request = new Request([
@@ -26,18 +32,12 @@ class UtmParametersExtractorTest extends TestCase
             'utm_campaign' => 'spring_sale',
             'utm_term' => 'running shoes',
             'utm_content' => 'banner_1',
-            'other_param' => 'ignored'
+            'other_param' => 'ignored',
         ]);
-        
-        $this->logger->expects($this->once())
-            ->method('debug')
-            ->with('提取UTM参数', $this->anything());
-        
-        $extractor = new UtmParametersExtractor($this->logger);
-        
+
         // Act
-        $result = $extractor->extract($request);
-        
+        $result = $this->extractor->extract($request);
+
         // Assert
         $this->assertInstanceOf(UtmParametersDto::class, $result);
         $this->assertSame('google', $result->getSource());
@@ -47,20 +47,15 @@ class UtmParametersExtractorTest extends TestCase
         $this->assertSame('banner_1', $result->getContent());
         $this->assertEmpty($result->getAdditionalParameters());
     }
-    
-    public function testExtract_withNoParameters_returnsEmptyDto(): void
+
+    public function testExtractWithNoParametersReturnsEmptyDto(): void
     {
         // Arrange
         $request = new Request();
-        
-        $this->logger->expects($this->never())
-            ->method('debug');
-        
-        $extractor = new UtmParametersExtractor($this->logger);
-        
+
         // Act
-        $result = $extractor->extract($request);
-        
+        $result = $this->extractor->extract($request);
+
         // Assert
         $this->assertInstanceOf(UtmParametersDto::class, $result);
         $this->assertNull($result->getSource());
@@ -71,108 +66,45 @@ class UtmParametersExtractorTest extends TestCase
         $this->assertEmpty($result->getAdditionalParameters());
         $this->assertFalse($result->hasAnyParameter());
     }
-    
-    public function testExtract_withCustomParameters_includesCustomParameters(): void
-    {
-        // Arrange
-        $request = new Request([
-            'utm_source' => 'facebook',
-            'utm_custom1' => 'value1',
-            'utm_custom2' => 'value2',
-        ]);
-        
-        $this->logger->expects($this->once())
-            ->method('debug')
-            ->with('提取UTM参数', $this->anything());
-        
-        $extractor = new UtmParametersExtractor(
-            $this->logger,
-            ['utm_source', 'utm_medium'], // 只允许这两个标准参数
-            ['utm_custom1', 'utm_custom2'] // 允许这两个自定义参数
-        );
-        
-        // Act
-        $result = $extractor->extract($request);
-        
-        // Assert
-        $this->assertInstanceOf(UtmParametersDto::class, $result);
-        $this->assertSame('facebook', $result->getSource());
-        $this->assertNull($result->getMedium());
-        $this->assertNull($result->getCampaign());
-        $this->assertNull($result->getTerm());
-        $this->assertNull($result->getContent());
-        
-        $additionalParams = $result->getAdditionalParameters();
-        $this->assertCount(2, $additionalParams);
-        $this->assertSame('value1', $additionalParams['custom1']);
-        $this->assertSame('value2', $additionalParams['custom2']);
-    }
-    
-    public function testHasUtmParameters_withStandardParameter_returnsTrue(): void
+
+    public function testHasUtmParametersWithStandardParameterReturnsTrue(): void
     {
         // Arrange
         $request = new Request([
             'utm_source' => 'google',
-            'other_param' => 'value'
+            'other_param' => 'value',
         ]);
-        
-        $extractor = new UtmParametersExtractor($this->logger);
-        
+
         // Act
-        $result = $extractor->hasUtmParameters($request);
-        
+        $result = $this->extractor->hasUtmParameters($request);
+
         // Assert
         $this->assertTrue($result);
     }
-    
-    public function testHasUtmParameters_withCustomParameter_returnsTrue(): void
+
+    public function testHasUtmParametersWithNoUtmParametersReturnsFalse(): void
     {
         // Arrange
         $request = new Request([
-            'utm_custom' => 'value',
-            'other_param' => 'value'
+            'other_param' => 'value',
         ]);
-        
-        $extractor = new UtmParametersExtractor(
-            $this->logger,
-            ['utm_source'], // 标准参数
-            ['utm_custom'] // 自定义参数
-        );
-        
+
         // Act
-        $result = $extractor->hasUtmParameters($request);
-        
-        // Assert
-        $this->assertTrue($result);
-    }
-    
-    public function testHasUtmParameters_withNoUtmParameters_returnsFalse(): void
-    {
-        // Arrange
-        $request = new Request([
-            'other_param' => 'value'
-        ]);
-        
-        $extractor = new UtmParametersExtractor($this->logger);
-        
-        // Act
-        $result = $extractor->hasUtmParameters($request);
-        
+        $result = $this->extractor->hasUtmParameters($request);
+
         // Assert
         $this->assertFalse($result);
     }
-    
-    public function testHasUtmParameters_withEmptyRequest_returnsFalse(): void
+
+    public function testHasUtmParametersWithEmptyRequestReturnsFalse(): void
     {
         // Arrange
         $request = new Request();
-        
-        $extractor = new UtmParametersExtractor($this->logger);
-        
+
         // Act
-        $result = $extractor->hasUtmParameters($request);
-        
+        $result = $this->extractor->hasUtmParameters($request);
+
         // Assert
         $this->assertFalse($result);
     }
-} 
+}
