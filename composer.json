@@ -33,6 +33,7 @@
   "require-dev": {
     "doctrine/data-fixtures": "^2.0",
     "doctrine/doctrine-fixtures-bundle": "^4.0",
+    "fakerphp/faker": "^1.23",
     "phpstan/phpstan": "^2.1",
     "phpunit/phpunit": "^11.5",
     "tourze/phpunit-base": "1.*",
