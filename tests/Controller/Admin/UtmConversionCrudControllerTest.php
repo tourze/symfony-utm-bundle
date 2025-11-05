@@ -27,8 +27,7 @@ final class UtmConversionCrudControllerTest extends AbstractEasyAdminControllerT
 
     public function testEntityConfiguration(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client, 'admin@example.com', 'password123');
+        $client = $this->createAuthenticatedClient();
 
         $client->request('GET', '/admin/utm/conversion');
 
@@ -39,8 +38,7 @@ final class UtmConversionCrudControllerTest extends AbstractEasyAdminControllerT
 
     public function testIndexPage(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client, 'admin@example.com', 'password123');
+        $client = $this->createAuthenticatedClient();
 
         $client->request('GET', '/admin/utm/conversion');
 
@@ -51,8 +49,7 @@ final class UtmConversionCrudControllerTest extends AbstractEasyAdminControllerT
 
     public function testNewPage(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client, 'admin@example.com', 'password123');
+        $client = $this->createAuthenticatedClient();
 
         $client->request('GET', '/admin/utm/conversion?crudAction=new');
 
@@ -63,8 +60,7 @@ final class UtmConversionCrudControllerTest extends AbstractEasyAdminControllerT
 
     public function testSearchByEventName(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client, 'admin@example.com', 'password123');
+        $client = $this->createAuthenticatedClient();
 
         $client->request('GET', '/admin/utm/conversion', [
             'filters' => [
@@ -82,8 +78,7 @@ final class UtmConversionCrudControllerTest extends AbstractEasyAdminControllerT
 
     public function testSearchByUserIdentifier(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client, 'admin@example.com', 'password123');
+        $client = $this->createAuthenticatedClient();
 
         $client->request('GET', '/admin/utm/conversion', [
             'filters' => [

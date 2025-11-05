@@ -27,8 +27,7 @@ final class UtmParametersCrudControllerTest extends AbstractEasyAdminControllerT
 
     public function testEntityConfiguration(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client, 'admin@example.com', 'password123');
+        $client = $this->createAuthenticatedClient();
 
         $client->request('GET', '/admin/utm/parameters');
 
@@ -39,8 +38,7 @@ final class UtmParametersCrudControllerTest extends AbstractEasyAdminControllerT
 
     public function testIndexPage(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client, 'admin@example.com', 'password123');
+        $client = $this->createAuthenticatedClient();
 
         $client->request('GET', '/admin/utm/parameters');
 
@@ -51,8 +49,7 @@ final class UtmParametersCrudControllerTest extends AbstractEasyAdminControllerT
 
     public function testNewPage(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client, 'admin@example.com', 'password123');
+        $client = $this->createAuthenticatedClient();
 
         $client->request('GET', '/admin/utm/parameters?crudAction=new');
 
@@ -63,8 +60,7 @@ final class UtmParametersCrudControllerTest extends AbstractEasyAdminControllerT
 
     public function testSearchBySource(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client, 'admin@example.com', 'password123');
+        $client = $this->createAuthenticatedClient();
 
         $client->request('GET', '/admin/utm/parameters', [
             'filters' => [
@@ -86,8 +82,7 @@ final class UtmParametersCrudControllerTest extends AbstractEasyAdminControllerT
 
     public function testSearchByMedium(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client, 'admin@example.com', 'password123');
+        $client = $this->createAuthenticatedClient();
 
         $client->request('GET', '/admin/utm/parameters', [
             'filters' => [
